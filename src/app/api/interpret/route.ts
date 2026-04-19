@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai'; // Correcting to the standard SDK if needed, but the plan said @google/genai
 
 // Assuming the plan meant @google/generative-ai or a similar structure. 
 // However, package.json has @google/genai. 

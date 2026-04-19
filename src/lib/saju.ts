@@ -1,4 +1,4 @@
-export function calculateSaju(date: Date) {
+export function calculateSaju(_date: Date): { palja: string[], elements: { [key: string]: number } } {
   // Simplified mock logic for Manse-ryeok
   return {
     palja: ['甲', '子', '乙', '丑', '丙', '寅', '丁', '卯'],
