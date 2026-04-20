@@ -247,6 +247,7 @@ export default function Home() {
   const [sajuReport, setSajuReport] = useState('');
   const [finalReport, setFinalReport] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [activePopSpirit, setActivePopSpirit] = useState<string | null>(null);
   const [prevZodiac, setPrevZodiac] = useState<string | null>(null);
 
@@ -689,8 +690,22 @@ export default function Home() {
               </div>
 
               <div className="mt-20 flex flex-col sm:flex-row gap-6 pt-12 border-t border-white/10">
-                <button onClick={() => exportToPDF('report-section', 'minhwa-oracle-report.pdf')} className="flex-[2] bg-gradient-to-r from-accent to-yellow-600 text-background font-black py-5 rounded-[1.5rem] hover:brightness-110 active:scale-[0.98] transition-all shadow-2xl">
-                  민화 예언서 PDF 저장
+                <button 
+                  onClick={async () => {
+                    setIsExporting(true);
+                    try {
+                      await exportToPDF('report-section', 'minhwa-oracle-report.pdf');
+                    } catch (err) {
+                      console.error(err);
+                      alert('PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  }} 
+                  disabled={isExporting}
+                  className={`flex-[2] bg-gradient-to-r from-accent to-yellow-600 text-background font-black py-5 rounded-[1.5rem] hover:brightness-110 active:scale-[0.98] transition-all shadow-2xl ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isExporting ? '운명서 생성 중...' : '민화 예언서 PDF 저장'}
                 </button>
                 <button onClick={() => setStep('input')} className="flex-1 bg-white/5 py-5 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold opacity-60">다시 보기</button>
               </div>
