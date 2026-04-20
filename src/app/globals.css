@@ -1,26 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&family=East+Sea+Dokdo&family=Nanum+Brush+Script&family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap');
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+@plugin "@tailwindcss/typography";
 
 :root {
-  --background: #0d0b1a; /* Deep midnight purple */
+  --background: #0a0e17; /* Hip K-Fusion Navy */
   --foreground: #e0d7ff; /* Soft lavender white */
-  --accent: #d4af37;     /* Classic Gold */
-  --card-bg: rgba(25, 20, 45, 0.7);
+  --accent: #f1e5ac;     /* Champagne Gold */
+  --neon: #00e5ff;       /* Neon Blue */
+  --card-bg: rgba(10, 14, 23, 0.4);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
-  --font-mystic: 'Cinzel', serif;
+  --color-neon: var(--neon);
+  --font-mystic: 'Nanum Myeongjo', serif;
+  --font-cinzel: 'Cinzel', serif;
   --font-sans: 'Inter', sans-serif;
+  --font-cursive: 'Nanum Brush Script', cursive;
+  --font-batang: 'Gowun Batang', serif;
+  --font-myeongjo: 'Nanum Myeongjo', serif;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(70, 50, 150, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at 80% 70%, rgba(100, 40, 100, 0.15) 0%, transparent 40%);
+    radial-gradient(circle at 15% 20%, rgba(45, 27, 78, 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 85% 80%, rgba(26, 60, 94, 0.4) 0%, transparent 40%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  background-blend-mode: color-dodge, normal, normal;
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100vh;
@@ -29,12 +38,77 @@ body {
 h1, h2, h3 {
   font-family: var(--font-mystic);
   color: var(--accent);
-  text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+  text-shadow: 0 0 15px rgba(241, 229, 172, 0.4);
 }
 
 .glass {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  background: rgba(10, 14, 23, 0.4);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(241, 229, 172, 0.3);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.aura-glow {
+  animation: aura 3s infinite ease-in-out;
+}
+
+@keyframes aura {
+  0% { box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.5); }
+  100% { box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
+}
+
+.decor-accent {
+  position: relative;
+}
+.decor-accent::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+
+.font-mystic {
+  font-family: var(--font-mystic);
+  letter-spacing: 0.1em;
+}
+
+.font-cursive {
+  font-family: var(--font-cursive);
+}
+
+.font-batang {
+  font-family: var(--font-batang);
+}
+
+.font-myeongjo {
+  font-family: var(--font-myeongjo);
+}
+
+/* Typography refinement for the report */
+.report-content {
+  font-family: var(--font-myeongjo);
+}
+
+.report-content strong {
+  font-family: var(--font-batang);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Disable arrows/spinners for number inputs */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
