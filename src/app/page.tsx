@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateSaju } from '@/lib/saju';
 import { getShuffledDeck } from '@/lib/tarot';
@@ -247,9 +247,39 @@ export default function Home() {
   const [sajuReport, setSajuReport] = useState('');
   const [finalReport, setFinalReport] = useState('');
   const [loading, setLoading] = useState(false);
+  const [activePopSpirit, setActivePopSpirit] = useState<string | null>(null);
+  const [prevZodiac, setPrevZodiac] = useState<string | null>(null);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
+
+  // 1. Trigger spirit pop-out when both hour and minute are present and zodiac changes
+  useEffect(() => {
+    const h = birthData.hour?.trim() || '';
+    const m = birthData.minute?.trim() || '';
+    
+    if (h !== '' && m !== '') {
+      const zodiac = getZodiacByHour(h);
+      if (zodiac && zodiac.sprite !== prevZodiac) {
+        setPrevZodiac(zodiac.sprite);
+        setActivePopSpirit(zodiac.sprite);
+      }
+    } else {
+      // If either is empty, hide and reset
+      setPrevZodiac(null);
+      setActivePopSpirit(null);
+    }
+  }, [birthData.hour, birthData.minute, prevZodiac]);
+
+  // 2. Automatically hide the spirit after a delay
+  useEffect(() => {
+    if (activePopSpirit) {
+      const timer = setTimeout(() => {
+        setActivePopSpirit(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [activePopSpirit]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value; // YYYY-MM-DD
@@ -374,6 +404,48 @@ export default function Home() {
                />
             </div>
 
+            {/* Spirit Pop-out Overlay */}
+            <AnimatePresence mode="wait">
+              {activePopSpirit && (
+                <motion.div 
+                  key={activePopSpirit}
+                  initial={{ opacity: 0, scale: 0.2, y: 100, filter: 'blur(20px)' }}
+                  animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ 
+                    opacity: 0, 
+                    scale: 0, 
+                    x: 180, 
+                    y: 120, 
+                    filter: 'blur(15px)',
+                    transition: { duration: 0.5, ease: "anticipate" }
+                  }}
+                  transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+                >
+                  <div className="relative">
+                    {/* Mystical Glow Background */}
+                    <div className="absolute inset-0 bg-accent/20 blur-[100px] rounded-full scale-150 animate-pulse" />
+                    <div className="absolute inset-0 border-2 border-accent/30 rounded-full animate-ping scale-110" />
+                    
+                    <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-accent shadow-[0_0_50px_rgba(241,229,172,0.5)] overflow-hidden bg-[#050810]">
+                      <img 
+                        src={`/assets/zodiac/${activePopSpirit}.png`} 
+                        alt="Spirit" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-accent text-background px-6 py-1 rounded-full font-mystic text-xl font-bold shadow-lg"
+                    >
+                      {getZodiacByHour(birthData.hour || '')?.hanja}
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <h2 className="text-4xl mb-6 font-mystic font-light text-accent decor-accent">Jay Dosa의 천명(天命) 지도</h2>
             <div className="mb-10 max-w-md mx-auto font-mystic font-light tracking-[0.1em] text-center leading-[2]">
               <span className="text-xl text-blue-50/90 inline-block">
@@ -451,7 +523,8 @@ export default function Home() {
                         className="pl-4 ml-2 border-l border-accent/20 min-w-[40px] flex items-center justify-center cursor-pointer group/icon"
                         onClick={() => timeInputRef.current?.showPicker()}
                       >
-                        {birthData.hour && getZodiacByHour(birthData.hour) ? (
+                        {/* Show zodiac icon only when BOTH hour and minute are entered */}
+                        {birthData.hour && birthData.minute && getZodiacByHour(birthData.hour) ? (
                           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1.5 md:gap-2">
                             <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden bg-black/40 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
                               <img 
@@ -487,11 +560,6 @@ export default function Home() {
                   </div>
                 </div>
                 
-                {/* Zodiac Time Guide */}
-                <div className="mt-10 text-center text-[10px] md:text-xs text-blue-100/30 tracking-widest leading-[2.5] font-mystic border-t border-accent/10 pt-6">
-                  <p>子(자) 23~01시 · 丑(축) 01~03시 · 寅(인) 03~05시 · 卯(묘) 05~07시 · 辰(진) 07~09시 · 巳(사) 09~11시<br className="md:hidden" />
-                  <span className="hidden md:inline"> · </span>午(오) 11~13시 · 未(미) 13~15시 · 申(신) 15~17시 · 酉(유) 17~19시 · 戌(술) 19~21시 · 亥(해) 21~23시</p>
-                </div>
               </div>
 
               <button onClick={handleSajuStart} disabled={loading} className="w-full max-w-xl bg-neon text-white font-sans font-bold tracking-[0.2em] py-5 md:py-6 rounded-full drop-shadow-[0_4px_15px_rgba(0,229,255,0.3)] hover:shadow-[0_0_40px_rgba(0,229,255,0.7)] hover:bg-[#00d0ff] active:scale-95 transition-all text-lg md:text-xl mt-12 mb-8 mx-auto relative overflow-hidden group">
