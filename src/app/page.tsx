@@ -189,23 +189,29 @@ function DosaLoadingOverlay({ message }: { message: string }) {
   );
 }
 
+const ZODIAC_SPRITES: Record<string, string> = {
+  '子': 'rat', '丑': 'ox', '寅': 'tiger', '卯': 'rabbit',
+  '辰': 'dragon', '巳': 'snake', '午': 'horse', '未': 'goat',
+  '申': 'monkey', '酉': 'rooster', '戌': 'dog', '亥': 'pig'
+};
+
 const getZodiacByHour = (hourStr: string) => {
   if (!hourStr) return null;
   const h = parseInt(hourStr, 10);
   if (isNaN(h)) return null;
   
-  if (h >= 23 || h < 1) return { icon: '🐀', hanja: '子(자)' };
-  if (h >= 1 && h < 3) return { icon: '🐂', hanja: '丑(축)' };
-  if (h >= 3 && h < 5) return { icon: '🐅', hanja: '寅(인)' };
-  if (h >= 5 && h < 7) return { icon: '🐇', hanja: '卯(묘)' };
-  if (h >= 7 && h < 9) return { icon: '🐉', hanja: '辰(진)' };
-  if (h >= 9 && h < 11) return { icon: '🐍', hanja: '巳(사)' };
-  if (h >= 11 && h < 13) return { icon: '🐎', hanja: '午(오)' };
-  if (h >= 13 && h < 15) return { icon: '🐐', hanja: '未(미)' };
-  if (h >= 15 && h < 17) return { icon: '🐒', hanja: '申(신)' };
-  if (h >= 17 && h < 19) return { icon: '🐓', hanja: '酉(유)' };
-  if (h >= 19 && h < 21) return { icon: '🐕', hanja: '戌(술)' };
-  if (h >= 21 && h < 23) return { icon: '🐖', hanja: '亥(해)' };
+  if (h >= 23 || h < 1) return { icon: '🐀', hanja: '子(자)', sprite: 'rat' };
+  if (h >= 1 && h < 3) return { icon: '🐂', hanja: '丑(축)', sprite: 'ox' };
+  if (h >= 3 && h < 5) return { icon: '🐅', hanja: '寅(인)', sprite: 'tiger' };
+  if (h >= 5 && h < 7) return { icon: '🐇', hanja: '卯(묘)', sprite: 'rabbit' };
+  if (h >= 7 && h < 9) return { icon: '🐉', hanja: '辰(진)', sprite: 'dragon' };
+  if (h >= 9 && h < 11) return { icon: '🐍', hanja: '巳(사)', sprite: 'snake' };
+  if (h >= 11 && h < 13) return { icon: '🐎', hanja: '午(오)', sprite: 'horse' };
+  if (h >= 13 && h < 15) return { icon: '🐐', hanja: '未(미)', sprite: 'goat' };
+  if (h >= 15 && h < 17) return { icon: '🐒', hanja: '申(신)', sprite: 'monkey' };
+  if (h >= 17 && h < 19) return { icon: '🐓', hanja: '酉(유)', sprite: 'rooster' };
+  if (h >= 19 && h < 21) return { icon: '🐕', hanja: '戌(술)', sprite: 'dog' };
+  if (h >= 21 && h < 23) return { icon: '🐖', hanja: '亥(해)', sprite: 'pig' };
   return null;
 }
 
@@ -447,7 +453,18 @@ export default function Home() {
                       >
                         {birthData.hour && getZodiacByHour(birthData.hour) ? (
                           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1.5 md:gap-2">
-                            <span className="text-xl md:text-2xl drop-shadow-md">{getZodiacByHour(birthData.hour)?.icon}</span>
+                            <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden bg-black/40 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
+                              <img 
+                                src={`/assets/zodiac/${getZodiacByHour(birthData.hour)?.sprite}.png`} 
+                                alt="Zodiac"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                  const textNode = document.createTextNode(getZodiacByHour(birthData.hour)?.icon || '');
+                                  (e.target as HTMLImageElement).parentNode?.appendChild(textNode);
+                                }}
+                              />
+                            </div>
                             <span className="hidden sm:inline text-xs md:text-sm font-mystic text-accent shadow-sm">{getZodiacByHour(birthData.hour)?.hanja}</span>
                           </motion.div>
                         ) : (
@@ -492,8 +509,26 @@ export default function Home() {
               
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-16 px-4">
                 {sajuResult.palja.map((char, index) => (
-                  <div key={index} className="bg-white/5 p-4 rounded-xl text-center border border-accent/10 shadow-lg">
-                    <div className="text-3xl font-mystic text-accent mb-2">{char}</div>
+                  <div key={index} className={`p-4 rounded-xl text-center border shadow-lg transition-all ${
+                    index % 2 === 1 ? 'bg-accent/5 border-accent/20' : 'bg-white/5 border-white/10'
+                  }`}>
+                    {index % 2 === 1 && ZODIAC_SPRITES[char] ? (
+                      <div className="w-16 h-16 mx-auto mb-3 rounded-full border-2 border-accent/30 overflow-hidden bg-black/40 shadow-[0_0_15px_rgba(241,229,172,0.2)] group relative">
+                        <img 
+                          src={`/assets/zodiac/${ZODIAC_SPRITES[char]}.png`} 
+                          alt={char}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <span className="text-xl font-mystic text-accent font-bold">{char}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-3xl font-mystic text-accent mb-2">{char}</div>
+                    )}
                     <div className="text-[8px] opacity-30 uppercase tracking-tighter">
                       {['Year', 'Month', 'Day', 'Hour'][Math.floor(index/2)]} {index % 2 === 0 ? 'Top' : 'Bottom'}
                     </div>
