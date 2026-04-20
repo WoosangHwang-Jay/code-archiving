@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'API_KEY_MISSING' }, { status: 500 });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); // Switched to stable 1.5-flash
     let prompt = "";
 
     if (mode === 'saju_only') {
@@ -71,12 +71,40 @@ export async function POST(req: Request) {
       `;
     }
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    // --- Retry Logic for Stability ---
+    let attempts = 0;
+    const maxAttempts = 3;
+    let result;
+    let lastError;
 
+    while (attempts < maxAttempts) {
+      try {
+        result = await model.generateContent(prompt);
+        if (result) break;
+      } catch (err: any) {
+        attempts++;
+        lastError = err;
+        console.warn(`Gemini API Attempt ${attempts} failed:`, err.message);
+        if (attempts < maxAttempts) {
+          // Wait before retrying (exponential backoff: 1s, 2s)
+          await new Promise(res => setTimeout(res, attempts * 1000));
+        }
+      }
+    }
+
+    if (!result) {
+      throw lastError || new Error('Failed to generate content after retries');
+    }
+
+    const text = result.response.text();
     return NextResponse.json({ result: text });
   } catch (error: any) {
-    console.error('Gemini API Error:', error);
-    return NextResponse.json({ error: error.message || 'Unknown server error' }, { status: 500 });
+    console.error('Gemini API Final Error:', error);
+    const isServiceUnavailable = error.message?.includes('503') || error.message?.includes('Service Unavailable');
+    const displayMessage = isServiceUnavailable 
+      ? '서버 점검 중이거나 사용자가 많아 잠시 서비스가 지체되고 있습니다. 1~2분 후 다시 시도해 주세요.'
+      : (error.message || 'Unknown server error');
+      
+    return NextResponse.json({ error: displayMessage }, { status: 500 });
   }
 }
