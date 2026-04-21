@@ -32,7 +32,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'API_KEY_MISSING' }, { status: 500 });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' }); // Switched to stable 1.5-flash
     let prompt = "";
 
     if (mode === 'saju_only') {
@@ -71,39 +70,88 @@ export async function POST(req: Request) {
       `;
     }
 
-    // --- Retry Logic for Stability ---
-    let attempts = 0;
-    const maxAttempts = 3;
+    // --- Fallback & Retry Logic for Stability ---
+    // 2026년 4월 기준 최신 플래시 모델 라인업으로 마이그레이션 (3.1 및 2.5 시리즈)
+    const modelsToTry = [
+      { name: 'gemini-3.1-flash', version: 'v1', maxRetries: 3 },      // 2026년 최신 주력 모델
+      { name: 'gemini-3.1-flash-lite', version: 'v1', maxRetries: 2 }, // 저지연/저비용 모델
+      { name: 'gemini-2.5-flash', version: 'v1', maxRetries: 3 },      // 안정적인 2.5 시리즈
+      { name: 'gemini-2.5-flash-lite', version: 'v1', maxRetries: 1 }  // 가벼운 대안
+    ];
     let result;
     let lastError;
+    let success = false;
 
-    while (attempts < maxAttempts) {
-      try {
-        result = await model.generateContent(prompt);
-        if (result) break;
-      } catch (err: any) {
-        attempts++;
-        lastError = err;
-        console.warn(`Gemini API Attempt ${attempts} failed:`, err.message);
-        if (attempts < maxAttempts) {
-          // Wait before retrying (exponential backoff: 1s, 2s)
-          await new Promise(res => setTimeout(res, attempts * 1000));
+    for (const config of modelsToTry) {
+      if (success) break;
+      
+      const { name: modelName, version: apiVersion, maxRetries: maxAttemptsPerModel } = config;
+      // getGenerativeModel의 두 번째 인자로 apiVersion을 명시합니다.
+      const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion });
+      let attempts = 0;
+
+      while (attempts < maxAttemptsPerModel) {
+        try {
+          console.log(`Attempting interpretation with model: ${modelName} (${apiVersion}, Attempt ${attempts + 1})`);
+          // 60초 타임아웃 설정 (복잡한 해석을 위해 시간 연장) 및 콘텐츠 생성
+          result = await model.generateContent(prompt, { timeout: 60000 } as any);
+          if (result) {
+            success = true;
+            break;
+          }
+        } catch (err: any) {
+          attempts++;
+          lastError = err;
+          console.warn(`Gemini API [${modelName}] Attempt ${attempts} failed:`, err.message);
+          
+          // 404 에러(모델 없음) 발생 시 즉시 다음 모델로 전환
+          const isNotFound = err.message?.includes('404') || err.message?.includes('not found');
+          if (isNotFound) {
+            console.warn(`Model ${modelName} not found (404), skipping immediately.`);
+            break; 
+          }
+
+          const isRateLimit = err.message?.includes('429') || err.message?.includes('Quota');
+          if (isRateLimit) {
+            console.warn(`Rate limit (429) hit for ${modelName}, switching model immediately.`);
+            break; 
+          }
+
+          if (attempts < maxAttemptsPerModel) {
+            // 503(Service Unavailable)의 경우 조금 더 긴 대기 시간을 가짐
+            const isServiceBusy = err.message?.includes('503') || err.message?.includes('Service Unavailable');
+            const waitTime = isServiceBusy ? (attempts * 2000) : (attempts * 1000);
+            await new Promise(res => setTimeout(res, waitTime));
+          }
         }
+      }
+      
+      if (!success) {
+        console.warn(`Model ${modelName} failed. Trying next available model...`);
       }
     }
 
-    if (!result) {
-      throw lastError || new Error('Failed to generate content after retries');
+    if (!success || !result) {
+      throw lastError || new Error('Failed to generate content after trying all models');
     }
 
     const text = result.response.text();
     return NextResponse.json({ result: text });
   } catch (error: any) {
     console.error('Gemini API Final Error:', error);
+    
+    // 에러 유형별 사용자 안내 메시지 최적화
+    const isRateLimit = error.message?.includes('429') || error.message?.includes('Quota');
     const isServiceUnavailable = error.message?.includes('503') || error.message?.includes('Service Unavailable');
-    const displayMessage = isServiceUnavailable 
-      ? '서버 점검 중이거나 사용자가 많아 잠시 서비스가 지체되고 있습니다. 1~2분 후 다시 시도해 주세요.'
-      : (error.message || 'Unknown server error');
+    
+    let displayMessage = '사주 해석 중 일시적인 오류가 발생했습니다. 다시 시도해 주세요.';
+    if (isRateLimit) {
+      displayMessage = '오늘의 무료 이용 한도에 도달했습니다. 잠시 후 혹은 내일 다시 시도해 주세요.';
+    } else if (isServiceUnavailable) {
+      displayMessage = '현재 접속자가 많아 서비스가 지연되고 있습니다. 1~2분 후 다시 시도해 주세요.';
+    } else {
+      displayMessage = error.message || displayMessage;
+    }
       
     return NextResponse.json({ error: displayMessage }, { status: 500 });
   }

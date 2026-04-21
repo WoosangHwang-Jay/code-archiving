@@ -58,6 +58,11 @@ h1, h2, h3 {
   100% { box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
 }
 
+@keyframes shine {
+  0% { transform: translateX(-200%) skewX(-45deg); }
+  100% { transform: translateX(200%) skewX(-45deg); }
+}
+
 .decor-accent {
   position: relative;
 }

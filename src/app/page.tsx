@@ -95,96 +95,105 @@ function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = fals
 
 // Custom component for the mystical ritual loading animation
 function DosaLoadingOverlay({ message }: { message: string }) {
-  const charms = Array.from({ length: 12 });
   const loadingPhrases = [
-    "어허, 천기가 기묘하게 얽혀 있구만!",
-    "흐음... 만파식적의 소리가 들리는가?",
-    "잠시만 기다리게, 운명의 타래를 풀고 있으니.",
-    "허허, 자네의 운명이 참으로 기운차구만!"
+    "사주팔자 코드 치환 중...",
+    "오행 에너지 밀도 분석...",
+    "격국 패턴 정밀 스캔...",
+    "천명(天命) 지도 렌더링..."
   ];
+  const elements = [
+    { char: '木', label: 'Wood' },
+    { char: '火', label: 'Fire' },
+    { char: '土', label: 'Earth' },
+    { char: '金', label: 'Metal' },
+    { char: '水', label: 'Water' }
+  ];
+  
   const [phraseIdx, setPhraseIdx] = useState(0);
+  const [activeElementIdx, setActiveElementIdx] = useState(0);
 
-  // Rotate phrases
-  useState(() => {
-    const interval = setInterval(() => {
+  useEffect(() => {
+    const phraseInterval = setInterval(() => {
       setPhraseIdx((prev) => (prev + 1) % loadingPhrases.length);
-    }, 2500);
-    return () => clearInterval(interval);
-  });
+    }, 2800);
+    
+    const elementInterval = setInterval(() => {
+      setActiveElementIdx((prev) => (prev + 1) % elements.length);
+    }, 600);
+    
+    return () => {
+      clearInterval(phraseInterval);
+      clearInterval(elementInterval);
+    };
+  }, []);
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/90 backdrop-blur-xl"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050810]/95 backdrop-blur-2xl"
     >
-      <div className="relative w-80 h-80 flex items-center justify-center">
-        {/* Rotating Bagua (팔괘) Background */}
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 opacity-20"
-        >
-          <svg viewBox="0 0 100 100" className="w-full h-full fill-accent">
-            <path d="M50 5A45 45 0 1 0 50 95A45 45 0 1 0 50 5 M50 15A35 35 0 1 1 50 85A35 35 0 1 1 50 15" fillRule="evenodd" />
-            {[0, 45, 90, 135, 180, 225, 270, 315].map(deg => (
-              <rect key={deg} x="48" y="5" width="4" height="15" transform={`rotate(${deg} 50 50)`} />
-            ))}
-          </svg>
-        </motion.div>
+      <div className="relative flex flex-col items-center">
+        {/* Background Aura */}
+        <div className="absolute inset-0 bg-accent/5 blur-[120px] rounded-full scale-150" />
+        
+        {/* Five Elements Sequential Animation */}
+        <div className="flex gap-6 md:gap-10 mb-16 relative z-10">
+          {elements.map((el, i) => (
+            <div key={el.char} className="flex flex-col items-center">
+              <motion.span
+                animate={{ 
+                  color: i === activeElementIdx ? "#f1e5ac" : "rgba(241, 229, 172, 0.15)",
+                  scale: i === activeElementIdx ? 1.4 : 1,
+                  textShadow: i === activeElementIdx ? "0 0 25px rgba(241, 229, 172, 0.6)" : "none"
+                }}
+                transition={{ duration: 0.4 }}
+                className="text-4xl md:text-5xl font-mystic cursor-default"
+              >
+                {el.char}
+              </motion.span>
+              <motion.span 
+                animate={{ opacity: i === activeElementIdx ? 0.4 : 0 }}
+                className="text-[8px] uppercase tracking-widest mt-2 text-accent font-bold"
+              >
+                {el.label}
+              </motion.span>
+            </div>
+          ))}
+        </div>
 
-        {/* Floating Charms (부적) */}
-        {charms.map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ y: 100, x: Math.random() * 200 - 100, opacity: 0, scale: 0.5, rotate: 0 }}
-            animate={{ 
-              y: -300, 
-              x: Math.random() * 400 - 200, 
-              opacity: [0, 1, 0],
-              scale: [0.5, 1.2, 0.8],
-              rotate: 360 
-            }}
-            transition={{ 
-              duration: 3 + Math.random() * 2, 
-              repeat: Infinity, 
-              delay: i * 0.4,
-              ease: "easeOut"
-            }}
-            className="absolute w-8 h-12 bg-accent/40 rounded-sm border border-accent/60 flex items-center justify-center text-[6px] text-background font-bold p-1 overflow-hidden"
-          >
-            <div className="rotate-90 whitespace-nowrap">天命 • 運命</div>
-          </motion.div>
-        ))}
+        {/* Progress Ring or Subtle Divider */}
+        <div className="w-64 h-[1px] bg-gradient-to-r from-transparent via-accent/30 to-transparent mb-12" />
 
-        {/* Jay Dosa Character (Jeon Woo-chi) */}
-        <motion.div 
-          animate={{ y: [0, -10, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="relative z-10"
-        >
-          <img 
-            src="/assets/jay-dosa.png" 
-            alt="Jay Dosa" 
-            className="w-48 h-48 rounded-full border-4 border-accent shadow-[0_0_50px_rgba(212,175,55,0.4)]"
-          />
-          <div className="absolute -inset-4 border-2 border-accent/20 rounded-full animate-ping" />
-        </motion.div>
+        <div className="text-center relative z-10">
+          <AnimatePresence mode="wait">
+            <motion.p 
+              key={phraseIdx}
+              initial={{ opacity: 0, y: 10, color: "#e0d7ff" }}
+              animate={{ 
+                opacity: 1, 
+                y: 0, 
+                color: ["#e0d7ff", "#f1e5ac", "#e0d7ff"] 
+              }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ 
+                color: { duration: 2, repeat: Infinity },
+                opacity: { duration: 0.5 },
+                y: { duration: 0.5 }
+              }}
+              className="text-xl md:text-2xl font-mystic text-accent mb-4 tracking-[0.1em]"
+            >
+              {loadingPhrases[phraseIdx]}
+            </motion.p>
+          </AnimatePresence>
+          <p className="text-[10px] md:text-xs opacity-30 uppercase tracking-[0.4em] font-cinzel">{message}</p>
+        </div>
       </div>
 
-      <div className="mt-12 text-center">
-        <motion.p 
-          key={phraseIdx}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="text-xl font-mystic text-accent mb-4 tracking-wider"
-        >
-          {loadingPhrases[phraseIdx]}
-        </motion.p>
-        <p className="text-sm opacity-40 uppercase tracking-[0.3em]">{message}</p>
-      </div>
+      {/* Traditional Corner Accents in Loading Screen */}
+      <div className="absolute top-12 left-12 w-12 h-12 border-t-2 border-l-2 border-accent/10 rounded-tl-3xl" />
+      <div className="absolute bottom-12 right-12 w-12 h-12 border-b-2 border-r-2 border-accent/10 rounded-br-3xl" />
     </motion.div>
   );
 }
@@ -563,10 +572,24 @@ export default function Home() {
                 
               </div>
 
-              <button onClick={handleSajuStart} disabled={loading} className="w-full max-w-xl bg-neon text-white font-sans font-bold tracking-[0.2em] py-5 md:py-6 rounded-full drop-shadow-[0_4px_15px_rgba(0,229,255,0.3)] hover:shadow-[0_0_40px_rgba(0,229,255,0.7)] hover:bg-[#00d0ff] active:scale-95 transition-all text-lg md:text-xl mt-12 mb-8 mx-auto relative overflow-hidden group">
-                <span className="relative z-10">{loading ? 'ANALYZING...' : 'START MY DESTINY ANALYSIS'}</span>
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-              </button>
+              <motion.button 
+                onClick={handleSajuStart} 
+                disabled={loading} 
+                whileHover={{ scale: 1.02, boxShadow: "0 0 50px rgba(0, 229, 255, 0.6)" }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full max-w-xl bg-neon text-white font-myeongjo font-extrabold tracking-[0.15em] py-5 md:py-6 rounded-full drop-shadow-[0_4px_15px_rgba(0,229,255,0.3)] transition-all text-xl md:text-2xl mt-12 mb-8 mx-auto relative overflow-hidden group"
+              >
+                <span className="relative z-10">{loading ? '천기를 읽는 중...' : '나의 천명 읽기'}</span>
+                
+                {/* Silver/White Shine Ripple Effect on Hover */}
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-45 -translate-x-[200%] group-hover:animate-[shine_1.5s_infinite]"
+                  initial={false}
+                />
+                
+                {/* Active Ripple Wave */}
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-active:opacity-100 transition-opacity duration-300 scale-0 group-active:scale-150 rounded-full" />
+              </motion.button>
             </div>
           </motion.section>
         )}
