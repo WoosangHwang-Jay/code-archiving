@@ -1,0 +1,16 @@
+# Firebase App Hosting configuration
+# This file configures the Cloud Run service that runs your Next.js app.
+
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+
+env:
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
+    availability:
+      - RUNTIME
+      - BUILD
