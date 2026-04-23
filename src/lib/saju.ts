@@ -23,11 +23,27 @@ const BRANCH_ELEMENTS: Record<typeof BRANCHES[number], Element> = {
   '亥': 'water', '子': 'water', '丑': 'earth'
 };
 
+export type SajuResult = {
+  palja: string[];
+  elements: { [key in Element]: number };
+  fortuneScores: {
+    relations: number;
+    honor: number;
+    health: number;
+    love: number;
+    family: number;
+    career: number;
+    studies: number;
+    wealth: number;
+  };
+  luckWave: { year: number; value: number }[];
+};
+
 /**
  * Calculates Saju based on the provided date and time.
  * Note: This implementation uses a simplified solar calendar approximation for pillars.
  */
-export function calculateSaju(date: Date): { palja: string[], elements: { [key in Element]: number } } {
+export function calculateSaju(date: Date): SajuResult {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -42,23 +58,19 @@ export function calculateSaju(date: Date): { palja: string[], elements: { [key i
   const yearBranch = BRANCHES[yearBranchIdx];
 
   // 2. Month Pillar (Approximate version based on solar terms)
-  // Each lunar month roughly starts on these days (approximation for 24 solar terms)
-  const solarTermDays = [5, 4, 5, 5, 5, 6, 7, 7, 8, 8, 7, 7]; // Solar terms transition roughly
+  const solarTermDays = [5, 4, 5, 5, 5, 6, 7, 7, 8, 8, 7, 7];
   let sajuMonth = month;
   if (day < solarTermDays[month - 1]) {
     sajuMonth = month - 1;
   }
   if (sajuMonth === 0) sajuMonth = 12;
   
-  // Month Stem is derived from Year Stem
-  // Rule: (YearStemIndex * 2 + Month) % 10
   const monthStemIdx = (yearStemIdx * 2 + sajuMonth) % 10;
-  const monthBranchIdx = (sajuMonth + 1) % 12; // Month Branch starts with Tiger(寅, idx 2) for Feb (Month 2)
+  const monthBranchIdx = (sajuMonth + 1) % 12;
   const monthStem = STEMS[monthStemIdx];
   const monthBranch = BRANCHES[monthBranchIdx];
 
   // 3. Day Pillar
-  // Ref: 2000-01-01 was Mu-Oh (戊午, Index 54 in 60-day cycle)
   const refDate = new Date(2000, 0, 1);
   const diffTime = date.getTime() - refDate.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -70,10 +82,7 @@ export function calculateSaju(date: Date): { palja: string[], elements: { [key i
   const dayBranch = BRANCHES[dayBranchIdx];
 
   // 4. Hour Pillar
-  // Hour Branch (2-hour windows, starts with Rat(子) at 23:00)
   const hourBranchIdx = Math.floor(((hour + 1) % 24) / 2);
-  // Hour Stem is derived from Day Stem
-  // Rule: (DayStemIndex * 2 + HourBranchIndex) % 10
   const hourStemIdx = (dayStemIdx * 2 + hourBranchIdx) % 10;
   
   const hourStem = STEMS[hourStemIdx];
@@ -94,5 +103,32 @@ export function calculateSaju(date: Date): { palja: string[], elements: { [key i
     elements[el]++;
   });
 
-  return { palja, elements };
+  // 6. Generate Fortune Scores (Semi-deterministic based on palja)
+  // We use the character codes of palja to seed a simple generator
+  const seed = palja.join('').split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const pseudoRand = (offset: number) => {
+    const space = Math.sin(seed + offset) * 10000;
+    return Math.floor((space - Math.floor(space)) * 40) + 60; // Returns 60-100
+  };
+
+  const fortuneScores = {
+    wealth: pseudoRand(1),
+    honor: pseudoRand(2),
+    health: pseudoRand(3),
+    love: pseudoRand(4),
+    family: pseudoRand(5),
+    career: pseudoRand(6),
+    studies: pseudoRand(7),
+    relations: pseudoRand(8),
+  };
+
+  // 7. Generate Luck Wave (100-year trend)
+  const luckWave = Array.from({ length: 11 }, (_, i) => {
+    const targetYear = year + (i * 10) - 20; // 20 years past to 80 years future
+    const waveSeed = seed + targetYear;
+    const waveVal = Math.sin(waveSeed * 0.1) * 30 + 50 + (Math.cos(waveSeed * 0.5) * 10);
+    return { year: targetYear, value: Math.max(10, Math.min(95, waveVal)) };
+  });
+
+  return { palja, elements, fortuneScores, luckWave };
 }

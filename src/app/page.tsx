@@ -8,6 +8,7 @@ import { exportToPDF } from '@/lib/export';
 import ReactMarkdown from 'react-markdown';
 import { Navigation } from '@/components/Navigation';
 import { interpretWithGemini } from '@/lib/geminiClient';
+import { SajuDashboard } from '@/components/SajuDashboard';
 
 // Jay Dosa Introduction text is rendered directly in the component.
 
@@ -595,9 +596,17 @@ export default function Home() {
         )}
 
         {step === 'saju_report' && sajuResult && (
-          <motion.section key="saju_report" id="saju-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full space-y-12">
-            <div className="glass p-12 rounded-[3rem] border-accent/20">
-              <h2 className="text-4xl mb-12 font-mystic text-center decor-accent">사주 오행의 기운</h2>
+          <motion.section key="saju_report" id="saju-section" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-12">
+            {/* Premium Dashboard Visuals */}
+            <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
+
+            {/* Original Palja Display (Kept as secondary detail) */}
+            <div className="glass p-10 rounded-[3rem] border border-accent/20 bg-[#050810]/50 backdrop-blur-xl">
+              <h2 className="text-2xl mb-10 font-mystic text-center text-accent/60 italic tracking-widest flex items-center justify-center gap-4">
+                <span className="h-[1px] w-8 bg-accent/20" />
+                천간지지 팔자(八字) 상세
+                <span className="h-[1px] w-8 bg-accent/20" />
+              </h2>
               
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-16 px-4">
                 {sajuResult.palja.map((char, index) => (
@@ -610,9 +619,6 @@ export default function Home() {
                           src={`/assets/zodiac/${ZODIAC_SPRITES[char]}.png`} 
                           alt={char}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                            <span className="text-xl font-mystic text-accent font-bold">{char}</span>
@@ -628,24 +634,31 @@ export default function Home() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-5 gap-6 mb-16 px-8">
-                {Object.entries(sajuResult.elements).map(([el, val]) => (
-                  <div key={el} className="flex flex-col items-center">
-                    <div className="w-full bg-white/5 rounded-full h-36 relative overflow-hidden mb-3 border border-white/10">
-                      <motion.div initial={{ height: 0 }} animate={{ height: `${(val / 8) * 100}%` }} className={`absolute bottom-0 w-full ${ELEMENT_COLORS[el]} opacity-60`} />
-                    </div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest opacity-40">{el}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="prose prose-invert max-w-none bg-white/5 p-10 rounded-[2rem] border border-white/5 shadow-inner leading-relaxed text-blue-100/90 report-content">
+              {/* Enhanced Text Interpretation Rendering */}
+              <div className="prose prose-invert max-w-none bg-black/40 p-10 md:p-14 rounded-[3rem] border border-white/5 shadow-inner leading-[2.2] text-blue-50/90 report-content font-myeongjo text-lg">
                 <ReactMarkdown>{sajuReport}</ReactMarkdown>
               </div>
 
-              <div className="mt-12 flex flex-col sm:flex-row gap-4">
+              <div className="mt-12 flex flex-col sm:flex-row gap-4 no-export">
                 <button onClick={handleGoToTarot} className="flex-[2] bg-accent text-background font-black py-5 rounded-2xl hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all flex items-center justify-center gap-2">
                   🃏 민화 타로 카드로 더 깊은 조언 얻기
+                </button>
+                <button 
+                  onClick={async () => {
+                    setIsExporting(true);
+                    try {
+                      await exportToPDF('saju-section', 'saju-dashboard-report.pdf');
+                    } catch (err) {
+                      console.error(err);
+                      alert('PDF 생성 중 오류가 발생했습니다.');
+                    } finally {
+                      setIsExporting(false);
+                    }
+                  }}
+                  disabled={isExporting}
+                  className="flex-1 bg-white/10 py-5 rounded-2xl hover:bg-white/20 transition-all font-bold flex items-center justify-center gap-2 border border-white/10"
+                >
+                  💾 {isExporting ? '저장 중...' : 'PDF 저장'}
                 </button>
                 <button onClick={() => setStep('input')} className="flex-1 bg-white/5 py-5 rounded-2xl hover:bg-white/10 transition-all font-bold opacity-60">종료</button>
               </div>
@@ -688,27 +701,33 @@ export default function Home() {
           </motion.section>
         )}
 
-        {step === 'final_report' && (
+        {step === 'final_report' && sajuResult && (
           <motion.section key="final_report" id="report-section" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-12">
-            <div className="glass p-12 rounded-[4rem] border-accent shadow-[0_60px_100px_rgba(0,0,0,0.7)] relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-[100px]" />
-               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px]" />
+            {/* Integrated Saju Dashboard at the top of the report */}
+            <div className="no-export mb-8 text-center text-accent/40 text-sm tracking-[0.3em] font-mystic">INTEGRATED FATE REPORT</div>
+            <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
 
-              <h2 className="text-5xl mb-20 font-mystic text-center decor-accent leading-tight">민화가 들려주는<br/>당신의 천명</h2>
+            <div className="glass p-12 rounded-[4rem] border-accent shadow-[0_60px_100px_rgba(0,0,0,0.7)] relative overflow-hidden bg-[#050810]/80">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-[100px]" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px]" />
+
+              <h2 className="text-5xl mb-20 font-mystic text-center decor-accent leading-tight">민화가 들려주는<br/>당신의 통합 천명</h2>
               
-              <div className="flex flex-col md:flex-row gap-10 justify-center mb-20">
+              {/* Tarot Cards Selection for the report */}
+              <div className="flex flex-col md:flex-row gap-10 justify-center mb-20 px-10">
                 {selectedCards.map((card, idx) => (
                   <div key={idx} className="flex-1 max-w-[200px]">
                     <MinhwaCard card={card} index={idx} isFlipped={true} />
-                    <div className="text-center mt-4">
-                      <div className="text-sm font-mystic text-accent mb-1">{card.name}</div>
-                      <div className="text-[10px] opacity-30 uppercase tracking-widest">{['과거', '현재', '미래'][idx]}</div>
+                    <div className="text-center mt-6">
+                      <div className="text-base font-mystic text-accent mb-2">{card.name}</div>
+                      <div className="text-[10px] opacity-40 uppercase tracking-[0.2em] font-bold">{['과거의 기운', '현재의 흐름', '미래의 계시'][idx]}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="prose prose-invert max-w-none p-12 bg-black/40 rounded-[3rem] border border-white/5 backdrop-blur-md leading-[1.9] text-lg font-light text-blue-50/90 shadow-2xl report-content">
+              {/* Integrated Interpretation text */}
+              <div className="prose prose-invert max-w-none p-12 bg-black/40 rounded-[3rem] border border-white/5 shadow-2xl report-content leading-[2.2] text-xl font-light text-blue-50/90 font-myeongjo">
                 <ReactMarkdown>{finalReport}</ReactMarkdown>
               </div>
 

@@ -8,26 +8,57 @@ export const exportToPDF = async (elementId: string, filename: string) => {
     return;
   }
 
+  // Scroll to top to ensure full capture
+  const originalScrollPos = window.scrollY;
+  window.scrollTo(0, 0);
+
+  // Create a temporary style to fix html2canvas issues (3D transforms, blurs, etc.)
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .preserve-3d { transform-style: flat !important; }
+    .backface-hidden { backface-visibility: visible !important; }
+    .rotate-y-180 { transform: none !important; position: relative !important; }
+    .glass { backdrop-filter: none !important; background: rgba(10, 14, 23, 0.9) !important; }
+    #saju-bagua-image { animation: none !important; }
+    .motion-safe-none { animation: none !important; transition: none !important; }
+  `;
+  document.head.appendChild(style);
+
   try {
+    // Wait for animations to settle (increased delay for complex charts)
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
     const canvas = await html2canvas(element, {
-      backgroundColor: '#0a0e17', // Match the Jay Dosa theme background
+      backgroundColor: '#0a0e17',
       scale: 2,
-      logging: true, // Enable logging temporarily to help identify issues
-      useCORS: true, // Crucial for external images/fonts
+      useCORS: true,
       allowTaint: false,
+      ignoreElements: (el) => el.classList.contains('no-export'),
+      onclone: (clonedDoc) => {
+        // You can manipulate the cloned DOM here if needed
+        const clonedElement = clonedDoc.getElementById(elementId);
+        if (clonedElement) {
+           clonedElement.style.padding = '40px'; // Add some margin for the PDF
+        }
+      }
     });
     
-    const imgData = canvas.toDataURL('image/png');
+    document.head.removeChild(style);
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'px',
-      format: [canvas.width / 2, canvas.height / 2] // Scale back for proper PDF sizing
+      format: [canvas.width / 2, canvas.height / 2]
     });
 
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 2, canvas.height / 2);
     pdf.save(filename);
+    window.scrollTo(0, originalScrollPos);
   } catch (error) {
+    if (style.parentNode) document.head.removeChild(style);
+    window.scrollTo(0, originalScrollPos);
     console.error('PDF export failed:', error);
-    throw error; // Rethrow to let the UI handle it
+    throw error;
   }
 };
