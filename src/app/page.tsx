@@ -95,8 +95,8 @@ function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = fals
 }
 
 // Custom component for the mystical ritual loading animation
-function DosaLoadingOverlay({ message }: { message: string }) {
-  const loadingPhrases = [
+function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?: 'saju' | 'tarot' }) {
+  const sajuPhrases = [
     "생년월일 데이터 퀀텀 파싱 중...",
     "사주팔자 만세력 코드 추출...",
     "오행(木火土金水) 에너지 밸런스 측정...",
@@ -108,13 +108,39 @@ function DosaLoadingOverlay({ message }: { message: string }) {
     "잠재된 기운 스캐닝...",
     "최종 천명(天命) 보고서 렌더링 중..."
   ];
-  const elements = [
+
+  const tarotPhrases = [
+    "민화 속 상징물과 교감 중...",
+    "카드의 기운을 현재와 연결 중...",
+    "과거, 현재, 미래의 영적 실타래 분석...",
+    "명운과 타로의 신비로운 조화 연산 중...",
+    "Jay 도사의 영적 직관 필터 적용...",
+    "한지 속에 숨은 우주의 비밀 추출 중...",
+    "운명의 카드가 전하는 메시지 수신 중...",
+    "인연과 타이밍의 퀀텀 매칭...",
+    "영적 주파수 튜닝 중...",
+    "최종 통합 천명 리포트 생성 중..."
+  ];
+
+  const loadingPhrases = mode === 'tarot' ? tarotPhrases : sajuPhrases;
+  
+  const sajuElements = [
     { char: '木', label: 'Wood' },
     { char: '火', label: 'Fire' },
     { char: '土', label: 'Earth' },
     { char: '金', label: 'Metal' },
     { char: '水', label: 'Water' }
   ];
+
+  const tarotElements = [
+    { char: '🔮', label: 'Oracle' },
+    { char: '🃏', label: 'Card' },
+    { char: '✨', label: 'Spirit' },
+    { char: '🌙', label: 'Moon' },
+    { char: '☀️', label: 'Sun' }
+  ];
+
+  const elements = mode === 'tarot' ? tarotElements : sajuElements;
   
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [activeElementIdx, setActiveElementIdx] = useState(0);
@@ -132,7 +158,7 @@ function DosaLoadingOverlay({ message }: { message: string }) {
       clearInterval(phraseInterval);
       clearInterval(elementInterval);
     };
-  }, []);
+  }, [loadingPhrases.length, elements.length]);
 
   return (
     <motion.div 
@@ -383,7 +409,12 @@ export default function Home() {
     <main className="max-w-4xl mx-auto px-6 py-12 flex flex-col items-center min-h-screen">
       <Navigation />
       <AnimatePresence>
-        {loading && <DosaLoadingOverlay message="천기를 읽는 중입니다..." />}
+        {loading && (
+          <DosaLoadingOverlay 
+            message={step === 'tarot_picking' ? "운명의 실타래를 엮고 있습니다..." : "천기를 읽는 중입니다..."} 
+            mode={step === 'tarot_picking' ? 'tarot' : 'saju'} 
+          />
+        )}
       </AnimatePresence>
 
       <header className="text-center mb-16">
@@ -610,7 +641,7 @@ export default function Home() {
             <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
 
             {/* Original Palja Display (Kept as secondary detail) */}
-            <div className="glass p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-accent/20 bg-[#050810]/50 backdrop-blur-xl">
+            <div className="glass p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-accent/20 bg-[#050810]/50 backdrop-blur-xl no-export">
               <h2 className="text-2xl mb-10 font-mystic text-center text-accent/60 italic tracking-widest flex items-center justify-center gap-4">
                 <span className="h-[1px] w-8 bg-accent/20" />
                 천간지지 팔자(八字) 상세
@@ -642,9 +673,10 @@ export default function Home() {
                   </div>
                 ))}
               </div>
+            </div>
 
-              {/* Enhanced Text Interpretation Rendering */}
-              <div className="prose prose-invert max-w-none bg-black/40 p-5 md:p-10 rounded-[1.5rem] md:rounded-[3rem] border border-white/5 shadow-inner leading-[1.8] md:leading-[2.2] text-blue-50/90 report-content font-myeongjo text-base md:text-lg">
+            {/* Enhanced Text Interpretation Rendering */}
+            <div className="prose prose-invert max-w-none bg-black/40 p-5 md:p-10 rounded-[1.5rem] md:rounded-[3rem] border border-white/5 shadow-inner leading-[1.8] md:leading-[2.2] text-blue-50/90 report-content font-myeongjo text-base md:text-lg">
                 <ReactMarkdown>{sajuReport}</ReactMarkdown>
               </div>
 
@@ -671,7 +703,6 @@ export default function Home() {
                 </button>
                 <button onClick={() => setStep('input')} className="flex-1 bg-white/5 py-5 rounded-2xl hover:bg-white/10 transition-all font-bold opacity-60">종료</button>
               </div>
-            </div>
           </motion.section>
         )}
 
@@ -705,7 +736,7 @@ export default function Home() {
             </div>
 
             <button onClick={getFinalInterpretation} disabled={selectedCards.length < 3 || loading} className="px-16 py-6 bg-accent text-background font-black rounded-full disabled:opacity-20 transition-all hover:scale-110 active:scale-95 shadow-[0_20px_40px_rgba(212,175,55,0.3)] text-xl">
-              {loading ? '신령의 계시를 받는 중...' : '최종 통합 예언 보기'}
+              {loading ? '신령의 계시를 받는 중...' : '🔮 천기와 타로의 신비로운 조화'}
             </button>
           </motion.section>
         )}

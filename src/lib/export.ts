@@ -12,111 +12,123 @@ export const exportToPDF = async (elementId: string, filename: string) => {
   const originalScrollPos = window.scrollY;
   window.scrollTo(0, 0);
 
-  // Create a temporary style to fix html2canvas issues (3D transforms, blurs, etc.)
-  // Crucial: Tailwind v4 uses oklch/oklab which html2canvas doesn't support.
-  // We force standard RGB/HEX colors for the export process.
-  const style = document.createElement('style');
-  style.innerHTML = `
-    * { 
-      color-interpolation: sRGB !important;
-      /* Fallback for modern colors */
-      --tw-text-opacity: 1 !important;
-      color: rgb(241, 229, 172) !important; 
-    }
-    .prose, .report-content, p, span, h1, h2, h3 { 
-      color: #f1e5ac !important; 
-    }
-    .bg-accent { background-color: #d4af37 !important; }
-    .text-accent { color: #f1e5ac !important; }
-    .preserve-3d { transform-style: flat !important; }
-    .backface-hidden { backface-visibility: visible !important; }
-    .rotate-y-180 { transform: none !important; position: relative !important; }
-    .glass { 
-      backdrop-filter: none !important; 
-      background-color: #050810 !important; 
-      background: #050810 !important;
-    }
-    #saju-bagua-image { animation: none !important; }
-    .motion-safe-none { animation: none !important; transition: none !important; }
-    
-    /* Force ignore any oklch/oklab variables */
-    :root {
-      --color-accent: #d4af37 !important;
-      --color-background: #050810 !important;
-    }
-  `;
-  document.head.appendChild(style);
-
   try {
-    // Wait for animations to settle (increased delay for complex charts)
-    await new Promise(resolve => setTimeout(resolve, 1500));
+      // Wait for animations and markdown to settle
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
     const canvas = await html2canvas(element, {
       backgroundColor: '#050810',
-      scale: 1.5,
+      scale: 1.5, // Reduced from 2.0 to prevent memory issues with long reports
       useCORS: true,
       allowTaint: false,
+      logging: true, // Enable logging for debugging
       ignoreElements: (el) => el.classList.contains('no-export'),
       onclone: (clonedDoc) => {
-        // STRATEGY: Remove all existing styles to avoid "oklab" parsing errors
-        const originalStyles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
-        originalStyles.forEach(s => s.remove());
-
-        // Inject only "Safe CSS" that html2canvas understands
+        // STRATEGY: Instead of removing ALL styles, we inject a high-priority "Safe Style"
+        // to override modern colors that cause parser errors.
         const safeStyle = clonedDoc.createElement('style');
         safeStyle.innerHTML = `
+          /* Force standard sRGB for all elements to prevent oklab parsing errors */
           * { 
-            box-sizing: border-box; 
-            margin: 0; padding: 0;
+            color-interpolation: sRGB !important;
             color: #f1e5ac !important;
-            border-color: rgba(241, 229, 172, 0.1) !important;
+            border-color: rgba(241, 229, 172, 0.2) !important;
           }
-          body { background-color: #050810 !important; font-family: sans-serif; }
-          .glass { background: #0a0e17 !important; border: 1px solid rgba(241, 229, 172, 0.2) !important; }
-          .bg-accent { background-color: #d4af37 !important; color: #050810 !important; }
-          .text-accent { color: #f1e5ac !important; }
-          .prose, .report-content { line-height: 1.8; font-size: 16px; color: #f1e5ac !important; }
-          .font-mystic { font-family: serif; font-weight: bold; }
-          .hidden { display: none !important; }
-          .flex { display: flex !important; }
-          .flex-col { flex-direction: column !important; }
-          .grid { display: grid !important; }
-          .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-          .gap-4 { gap: 1rem !important; }
-          .mt-8 { margin-top: 2rem !important; }
-          .p-8 { padding: 2rem !important; }
-          .rounded-3xl { border-radius: 1.5rem !important; }
-          .text-center { text-center: center !important; }
           
-          /* Show elements meant for export */
-          .export-only { display: block !important; }
+          /* Layout Stability for Export */
+          #report-section, #saju-section {
+            width: 794px !important;
+            padding: 40px !important;
+            background-color: #050810 !important;
+            margin: 0 auto !important;
+            display: block !important;
+          }
+
+          /* Ensure all flex/grid containers maintain their layout */
+          .flex { display: flex !important; }
+          .grid { display: grid !important; }
+          
+          /* Tarot Card 3D Flattening */
+          .preserve-3d { transform-style: flat !important; transform: none !important; }
+          .backface-hidden { backface-visibility: visible !important; }
+          .rotate-y-180 { transform: none !important; position: relative !important; }
+          
+          /* Interpretation Text Visibility */
+          .report-content, .prose { 
+            font-size: 16px !important;
+            line-height: 1.8 !important;
+            display: block !important;
+            visibility: visible !important;
+            color: #f1e5ac !important;
+          }
+
+          /* Hide UI elements that might have leaked through */
           .no-export { display: none !important; }
         `;
         clonedDoc.head.appendChild(safeStyle);
 
         const clonedElement = clonedDoc.getElementById(elementId);
         if (clonedElement) {
-           clonedElement.style.padding = '30px';
-           clonedElement.style.background = '#050810';
-           clonedElement.style.display = 'block';
+            // Force manual overrides on the cloned element itself
+            clonedElement.style.width = '794px';
+            clonedElement.style.backgroundColor = '#050810';
+            
+            // FIX: Force Tarot Cards to be flipped and flat in the DOM directly
+            const cards = clonedElement.querySelectorAll('.preserve-3d');
+            cards.forEach(card => {
+               (card as HTMLElement).style.transform = 'none';
+               (card as HTMLElement).style.transformStyle = 'flat';
+               
+               const faces = card.querySelectorAll('.backface-hidden');
+               faces.forEach((face, idx) => {
+                  if (idx === 0) { // Back
+                    (face as HTMLElement).style.display = 'none';
+                  } else { // Front
+                    (face as HTMLElement).style.transform = 'none';
+                    (face as HTMLElement).style.display = 'block';
+                    (face as HTMLElement).style.opacity = '1';
+                    (face as HTMLElement).style.visibility = 'visible';
+                  }
+               });
+            });
         }
       }
     });
-    
+
     document.head.removeChild(style);
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
     const pdf = new jsPDF({
       orientation: 'portrait',
-      unit: 'px',
-      format: [canvas.width / 2, canvas.height / 2]
+      unit: 'mm',
+      format: 'a4'
     });
 
-    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 2, canvas.height / 2);
+    // Calculate scaling to fit A4 width
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgProps = pdf.getImageProperties(imgData);
+    const imgWidth = pageWidth;
+    const imgHeight = (imgProps.height * pageWidth) / imgProps.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    // Add first page
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+    heightLeft -= pageHeight;
+
+    // Add subsequent pages if content is longer than A4 height
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+    }
+
     pdf.save(filename);
     window.scrollTo(0, originalScrollPos);
   } catch (error) {
-    if (style.parentNode) document.head.removeChild(style);
     window.scrollTo(0, originalScrollPos);
     console.error('PDF export failed:', error);
     throw error;

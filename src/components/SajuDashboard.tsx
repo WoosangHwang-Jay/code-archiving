@@ -142,7 +142,7 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
               initial={{ opacity: 0, scale: 0.8, rotate: -30 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ duration: 2 }}
-              className="absolute inset-0 flex items-center justify-center opacity-40"
+              className="absolute inset-0 flex items-center justify-center opacity-40 no-export"
             >
               <div className="relative w-full h-full max-w-[450px] max-h-[450px]">
                 <img id="saju-bagua-image" src="/assets/saju-bagua.png" alt="Bagua" className="w-full h-full object-contain animate-[spin_80s_linear_infinite]" />
@@ -242,13 +242,13 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
         </div>
 
         {/* PDF Export Only: Simple Score List (Hidden in Web View) */}
-        <div className="hidden export-only mt-8 p-8 bg-white/5 border border-accent/20 rounded-3xl">
-          <h2 className="text-xl font-mystic mb-6 text-accent">영역별 천기 점수 상세</h2>
-          <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+        <div className="hidden export-only mt-10 p-10 bg-black/40 border border-accent/30 rounded-[2rem]">
+          <h2 className="text-2xl font-mystic mb-8 text-accent text-center tracking-widest">천기 밸런스 상세 분석</h2>
+          <div className="grid grid-cols-2 gap-y-6 gap-x-12">
             {radarCategories.map((cat) => (
-              <div key={cat.key} className="flex justify-between items-center border-b border-white/5 pb-2">
-                <span className="text-sm opacity-60 font-mystic">{cat.label}</span>
-                <span className="text-base font-bold text-accent">{fortuneScores[cat.key]}점</span>
+              <div key={cat.key} className="flex justify-between items-center border-b border-white/10 pb-3">
+                <span className="text-base opacity-70 font-mystic">{cat.label}</span>
+                <span className="text-xl font-bold text-accent">{fortuneScores[cat.key]}점</span>
               </div>
             ))}
           </div>
