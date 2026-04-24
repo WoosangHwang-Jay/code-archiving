@@ -382,11 +382,11 @@ export default function Home() {
 
       <header className="text-center mb-16">
         <motion.h1 
-          className="text-6xl md:text-7xl font-light mb-4 tracking-[0.1em] text-accent font-cinzel drop-shadow-[0_0_15px_rgba(241,229,172,0.4)]"
+          className="text-5xl md:text-7xl font-light mb-4 tracking-[0.1em] text-accent font-cinzel drop-shadow-[0_0_15px_rgba(241,229,172,0.4)]"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          CHUNMYUNG <span className="font-mystic text-5xl md:text-6xl ml-2 align-baseline">(天命)</span>
+          CHUNMYUNG <span className="font-mystic text-4xl md:text-6xl ml-1 md:ml-2 align-baseline">(天命)</span>
         </motion.h1>
         <p className="mt-6 text-sm md:text-lg tracking-[0.3em] md:tracking-[0.5em] uppercase text-accent/80 font-cinzel font-light drop-shadow-md">
           The Destiny Code by Jay Dosa
@@ -480,17 +480,17 @@ export default function Home() {
                   {/* Date Form Row */}
                   <div className="w-full flex flex-col gap-2 relative">
                     <InputBox>
-                      <div className="flex-1 flex items-center justify-center relative">
-                        <input type="number" placeholder="연도 (YYYY)" min="0" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
-                          className="w-[140px] md:w-[170px] bg-transparent text-center text-xl md:text-2xl font-mystic font-light outline-none tracking-[0.1em] placeholder:text-accent/30 text-accent"
+                      <div className="flex-1 flex items-center justify-center relative gap-1 md:gap-0">
+                        <input type="number" placeholder="YYYY" min="0" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                          className="w-[80px] sm:w-[140px] md:w-[170px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-[0.1em] placeholder:text-accent/30 text-accent"
                           value={birthData.year} onChange={(e) => setBirthData({ ...birthData, year: e.target.value })} />
-                        <span className="opacity-60 mx-1 md:mx-4 text-2xl font-light font-sans text-accent">/</span>
-                        <input type="number" placeholder="월 (MM)" min="1" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
-                          className="w-[90px] md:w-[110px] bg-transparent text-center text-xl md:text-2xl font-mystic font-light outline-none tracking-[0.1em] placeholder:text-accent/30 text-accent"
+                        <span className="opacity-60 mx-0.5 md:mx-4 text-xl md:text-2xl font-light font-sans text-accent">/</span>
+                        <input type="number" placeholder="MM" min="1" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                          className="w-[60px] sm:w-[90px] md:w-[110px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-[0.1em] placeholder:text-accent/30 text-accent"
                           value={birthData.month} onChange={(e) => setBirthData({ ...birthData, month: e.target.value })} />
-                        <span className="opacity-60 mx-1 md:mx-4 text-2xl font-light font-sans text-accent">/</span>
-                        <input type="number" placeholder="일 (DD)" min="1" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
-                          className="w-[90px] md:w-[110px] bg-transparent text-center text-xl md:text-2xl font-mystic font-light outline-none tracking-[0.1em] placeholder:text-accent/30 text-accent"
+                        <span className="opacity-60 mx-0.5 md:mx-4 text-xl md:text-2xl font-light font-sans text-accent">/</span>
+                        <input type="number" placeholder="DD" min="1" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                          className="w-[60px] sm:w-[90px] md:w-[110px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-[0.1em] placeholder:text-accent/30 text-accent"
                           value={birthData.day} onChange={(e) => setBirthData({ ...birthData, day: e.target.value })} />
                       </div>
                       
@@ -519,13 +519,13 @@ export default function Home() {
                   {/* Time Form Row */}
                   <div className="w-full flex-col flex items-start gap-2">
                     <InputBox>
-                      <div className="flex-1 flex items-center justify-center relative">
-                        <input type="number" placeholder="시 (HH)" min="0" max="23" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
-                          className="w-[100px] md:w-[120px] bg-transparent text-center text-xl md:text-2xl font-mystic font-light outline-none tracking-widest placeholder:text-accent/30 text-accent"
+                      <div className="flex-1 flex items-center justify-center relative gap-1 md:gap-0">
+                        <input type="number" placeholder="HH" min="0" max="23" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                          className="w-[70px] sm:w-[100px] md:w-[120px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-widest placeholder:text-accent/30 text-accent"
                           value={birthData.hour} onChange={(e) => setBirthData({ ...birthData, hour: e.target.value })} />
-                        <span className="opacity-60 mx-1 md:mx-4 text-2xl font-light font-sans text-accent">:</span>
-                        <input type="number" placeholder="분 (MM)" min="0" max="59" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
-                          className="w-[110px] md:w-[130px] bg-transparent text-center text-xl md:text-2xl font-mystic font-light outline-none tracking-widest placeholder:text-accent/30 text-accent"
+                        <span className="opacity-60 mx-0.5 md:mx-4 text-xl md:text-2xl font-light font-sans text-accent">:</span>
+                        <input type="number" placeholder="MM" min="0" max="59" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                          className="w-[70px] sm:w-[110px] md:w-[130px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-widest placeholder:text-accent/30 text-accent"
                           value={birthData.minute} onChange={(e) => setBirthData({ ...birthData, minute: e.target.value })} />
                       </div>
                       
