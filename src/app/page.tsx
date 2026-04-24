@@ -610,7 +610,7 @@ export default function Home() {
             <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
 
             {/* Original Palja Display (Kept as secondary detail) */}
-            <div className="glass p-10 rounded-[3rem] border border-accent/20 bg-[#050810]/50 backdrop-blur-xl">
+            <div className="glass p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-accent/20 bg-[#050810]/50 backdrop-blur-xl">
               <h2 className="text-2xl mb-10 font-mystic text-center text-accent/60 italic tracking-widest flex items-center justify-center gap-4">
                 <span className="h-[1px] w-8 bg-accent/20" />
                 천간지지 팔자(八字) 상세
@@ -644,7 +644,7 @@ export default function Home() {
               </div>
 
               {/* Enhanced Text Interpretation Rendering */}
-              <div className="prose prose-invert max-w-none bg-black/40 p-10 md:p-14 rounded-[3rem] border border-white/5 shadow-inner leading-[2.2] text-blue-50/90 report-content font-myeongjo text-lg">
+              <div className="prose prose-invert max-w-none bg-black/40 p-5 md:p-10 rounded-[1.5rem] md:rounded-[3rem] border border-white/5 shadow-inner leading-[1.8] md:leading-[2.2] text-blue-50/90 report-content font-myeongjo text-base md:text-lg">
                 <ReactMarkdown>{sajuReport}</ReactMarkdown>
               </div>
 
@@ -716,19 +716,19 @@ export default function Home() {
             <div className="no-export mb-8 text-center text-accent/40 text-sm tracking-[0.3em] font-mystic">INTEGRATED FATE REPORT</div>
             <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
 
-            <div className="glass p-12 rounded-[4rem] border-accent shadow-[0_60px_100px_rgba(0,0,0,0.7)] relative overflow-hidden bg-[#050810]/80">
+            <div className="glass p-5 md:p-12 rounded-[2.5rem] md:rounded-[4rem] border-accent shadow-[0_60px_100px_rgba(0,0,0,0.7)] relative overflow-hidden bg-[#050810]/80">
               <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-[100px]" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px]" />
 
-              <h2 className="text-5xl mb-20 font-mystic text-center decor-accent leading-tight">민화가 들려주는<br/>당신의 통합 천명</h2>
+              <h2 className="text-3xl md:text-5xl mb-12 md:mb-20 font-mystic text-center decor-accent leading-tight">민화가 들려주는<br/>당신의 통합 천명</h2>
               
               {/* Tarot Cards Selection for the report */}
-              <div className="flex flex-col md:flex-row gap-10 justify-center mb-20 px-10">
+              <div className="flex flex-col md:flex-row gap-10 justify-center mb-16 md:mb-20 px-4 md:px-10">
                 {selectedCards.map((card, idx) => (
-                  <div key={idx} className="flex-1 max-w-[200px]">
+                  <div key={idx} className="flex-1 max-w-[180px] md:max-w-[200px] mx-auto md:mx-0">
                     <MinhwaCard card={card} index={idx} isFlipped={true} />
                     <div className="text-center mt-6">
-                      <div className="text-base font-mystic text-accent mb-2">{card.name}</div>
+                      <div className="text-sm md:text-base font-mystic text-accent mb-2">{card.name}</div>
                       <div className="text-[10px] opacity-40 uppercase tracking-[0.2em] font-bold">{['과거의 기운', '현재의 흐름', '미래의 계시'][idx]}</div>
                     </div>
                   </div>
@@ -736,7 +736,7 @@ export default function Home() {
               </div>
 
               {/* Integrated Interpretation text */}
-              <div className="prose prose-invert max-w-none p-12 bg-black/40 rounded-[3rem] border border-white/5 shadow-2xl report-content leading-[2.2] text-xl font-light text-blue-50/90 font-myeongjo">
+              <div className="prose prose-invert max-w-none p-5 md:p-12 bg-black/40 rounded-[2rem] md:rounded-[3rem] border border-white/5 shadow-2xl report-content leading-[1.8] md:leading-[2.2] text-lg md:text-xl font-light text-blue-50/90 font-myeongjo">
                 <ReactMarkdown>{finalReport}</ReactMarkdown>
               </div>
 
