@@ -740,7 +740,13 @@ export default function Home() {
                 <ReactMarkdown>{finalReport}</ReactMarkdown>
               </div>
 
-              <div className="mt-20 flex flex-col sm:flex-row gap-6 pt-12 border-t border-white/10">
+              {/* PDF Only Footer */}
+              <div className="hidden export-only mt-16 pt-8 border-t border-accent/20 text-center">
+                <p className="text-accent/60 font-mystic text-sm tracking-widest">본 리포트는 Jay 도사의 천명 지도를 통해 생성되었습니다.</p>
+                <p className="text-[10px] opacity-30 mt-2 uppercase tracking-tighter">© 2026 JAY DOSA - MYSTIC ORACLE | {new Date().toLocaleDateString()}</p>
+              </div>
+
+              <div className="mt-20 flex flex-col sm:flex-row gap-6 pt-12 border-t border-white/10 no-export">
                 <button 
                   onClick={async () => {
                     setIsExporting(true);

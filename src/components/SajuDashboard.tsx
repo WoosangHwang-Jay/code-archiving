@@ -129,8 +129,8 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
           </div>
         </div>
 
-        {/* Bottom: Radar Chart & Bagua (Full Width) */}
-        <div className="glass p-8 md:p-12 rounded-[2.5rem] border border-white/5 bg-white/5 backdrop-blur-md flex flex-col items-center">
+        {/* Bottom: Radar Chart & Bagua (Hidden in PDF) */}
+        <div className="glass p-8 md:p-12 rounded-[2.5rem] border border-white/5 bg-white/5 backdrop-blur-md flex flex-col items-center no-export">
           <h2 className="text-2xl font-mystic mb-6 text-accent/80 flex items-center gap-3 self-start">
             <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
             천기(天氣) 밸런스 분석
@@ -240,6 +240,19 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
             </div>
           </div>
         </div>
+
+        {/* PDF Export Only: Simple Score List (Hidden in Web View) */}
+        <div className="hidden export-only mt-8 p-8 bg-white/5 border border-accent/20 rounded-3xl">
+          <h2 className="text-xl font-mystic mb-6 text-accent">영역별 천기 점수 상세</h2>
+          <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+            {radarCategories.map((cat) => (
+              <div key={cat.key} className="flex justify-between items-center border-b border-white/5 pb-2">
+                <span className="text-sm opacity-60 font-mystic">{cat.label}</span>
+                <span className="text-base font-bold text-accent">{fortuneScores[cat.key]}점</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Bottom Luck Wave Chart */}
@@ -258,10 +271,12 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
               </linearGradient>
             </defs>
             
-            {/* Grid lines */}
-            {[0, 0.5, 1].map((p) => (
-              <line key={p} x1="0" y1={140 * p + 10} x2="800" y2={140 * p + 10} stroke="white" strokeOpacity="0.05" strokeDasharray="4 4" />
-            ))}
+            {/* Grid lines (Hidden in PDF for clean look) */}
+            <g className="no-export">
+              {[0, 0.5, 1].map((p) => (
+                <line key={p} x1="0" y1={140 * p + 10} x2="800" y2={140 * p + 10} stroke="white" strokeOpacity="0.05" strokeDasharray="4 4" />
+              ))}
+            </g>
 
             {/* Path Fill */}
             <motion.path 

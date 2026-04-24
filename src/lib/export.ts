@@ -29,16 +29,22 @@ export const exportToPDF = async (elementId: string, filename: string) => {
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     const canvas = await html2canvas(element, {
-      backgroundColor: '#0a0e17',
-      scale: 2,
+      backgroundColor: '#050810',
+      scale: 1.5, // Slightly lower for better stability
       useCORS: true,
       allowTaint: false,
       ignoreElements: (el) => el.classList.contains('no-export'),
       onclone: (clonedDoc) => {
-        // You can manipulate the cloned DOM here if needed
+        // Show hidden elements meant only for export
+        const exportOnlyElements = clonedDoc.querySelectorAll('.export-only');
+        exportOnlyElements.forEach(el => {
+          (el as HTMLElement).style.display = 'block';
+        });
+
         const clonedElement = clonedDoc.getElementById(elementId);
         if (clonedElement) {
-           clonedElement.style.padding = '40px'; // Add some margin for the PDF
+           clonedElement.style.padding = '30px';
+           clonedElement.style.background = '#050810';
         }
       }
     });
