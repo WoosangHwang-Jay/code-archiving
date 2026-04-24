@@ -13,14 +13,37 @@ export const exportToPDF = async (elementId: string, filename: string) => {
   window.scrollTo(0, 0);
 
   // Create a temporary style to fix html2canvas issues (3D transforms, blurs, etc.)
+  // Crucial: Tailwind v4 uses oklch/oklab which html2canvas doesn't support.
+  // We force standard RGB/HEX colors for the export process.
   const style = document.createElement('style');
   style.innerHTML = `
+    * { 
+      color-interpolation: sRGB !important;
+      /* Fallback for modern colors */
+      --tw-text-opacity: 1 !important;
+      color: rgb(241, 229, 172) !important; 
+    }
+    .prose, .report-content, p, span, h1, h2, h3 { 
+      color: #f1e5ac !important; 
+    }
+    .bg-accent { background-color: #d4af37 !important; }
+    .text-accent { color: #f1e5ac !important; }
     .preserve-3d { transform-style: flat !important; }
     .backface-hidden { backface-visibility: visible !important; }
     .rotate-y-180 { transform: none !important; position: relative !important; }
-    .glass { backdrop-filter: none !important; background: rgba(10, 14, 23, 0.9) !important; }
+    .glass { 
+      backdrop-filter: none !important; 
+      background-color: #050810 !important; 
+      background: #050810 !important;
+    }
     #saju-bagua-image { animation: none !important; }
     .motion-safe-none { animation: none !important; transition: none !important; }
+    
+    /* Force ignore any oklch/oklab variables */
+    :root {
+      --color-accent: #d4af37 !important;
+      --color-background: #050810 !important;
+    }
   `;
   document.head.appendChild(style);
 
