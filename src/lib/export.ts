@@ -53,21 +53,52 @@ export const exportToPDF = async (elementId: string, filename: string) => {
 
     const canvas = await html2canvas(element, {
       backgroundColor: '#050810',
-      scale: 1.5, // Slightly lower for better stability
+      scale: 1.5,
       useCORS: true,
       allowTaint: false,
       ignoreElements: (el) => el.classList.contains('no-export'),
       onclone: (clonedDoc) => {
-        // Show hidden elements meant only for export
-        const exportOnlyElements = clonedDoc.querySelectorAll('.export-only');
-        exportOnlyElements.forEach(el => {
-          (el as HTMLElement).style.display = 'block';
-        });
+        // STRATEGY: Remove all existing styles to avoid "oklab" parsing errors
+        const originalStyles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+        originalStyles.forEach(s => s.remove());
+
+        // Inject only "Safe CSS" that html2canvas understands
+        const safeStyle = clonedDoc.createElement('style');
+        safeStyle.innerHTML = `
+          * { 
+            box-sizing: border-box; 
+            margin: 0; padding: 0;
+            color: #f1e5ac !important;
+            border-color: rgba(241, 229, 172, 0.1) !important;
+          }
+          body { background-color: #050810 !important; font-family: sans-serif; }
+          .glass { background: #0a0e17 !important; border: 1px solid rgba(241, 229, 172, 0.2) !important; }
+          .bg-accent { background-color: #d4af37 !important; color: #050810 !important; }
+          .text-accent { color: #f1e5ac !important; }
+          .prose, .report-content { line-height: 1.8; font-size: 16px; color: #f1e5ac !important; }
+          .font-mystic { font-family: serif; font-weight: bold; }
+          .hidden { display: none !important; }
+          .flex { display: flex !important; }
+          .flex-col { flex-direction: column !important; }
+          .grid { display: grid !important; }
+          .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+          .gap-4 { gap: 1rem !important; }
+          .mt-8 { margin-top: 2rem !important; }
+          .p-8 { padding: 2rem !important; }
+          .rounded-3xl { border-radius: 1.5rem !important; }
+          .text-center { text-center: center !important; }
+          
+          /* Show elements meant for export */
+          .export-only { display: block !important; }
+          .no-export { display: none !important; }
+        `;
+        clonedDoc.head.appendChild(safeStyle);
 
         const clonedElement = clonedDoc.getElementById(elementId);
         if (clonedElement) {
            clonedElement.style.padding = '30px';
            clonedElement.style.background = '#050810';
+           clonedElement.style.display = 'block';
         }
       }
     });
