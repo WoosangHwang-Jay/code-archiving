@@ -97,10 +97,16 @@ function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = fals
 // Custom component for the mystical ritual loading animation
 function DosaLoadingOverlay({ message }: { message: string }) {
   const loadingPhrases = [
-    "사주팔자 코드 치환 중...",
-    "오행 에너지 밀도 분석...",
-    "격국 패턴 정밀 스캔...",
-    "천명(天命) 지도 렌더링..."
+    "생년월일 데이터 퀀텀 파싱 중...",
+    "사주팔자 만세력 코드 추출...",
+    "오행(木火土金水) 에너지 밸런스 측정...",
+    "격국 및 용신 정밀 알고리즘 연산...",
+    "천명(天命) 지도 동기화 중...",
+    "Jay 도사의 영적 직관 필터 적용...",
+    "운명의 타임라인 시뮬레이션...",
+    "대운과 세운의 흐름 데이터 가공...",
+    "잠재된 기운 스캐닝...",
+    "최종 천명(天命) 보고서 렌더링 중..."
   ];
   const elements = [
     { char: '木', label: 'Wood' },
@@ -116,7 +122,7 @@ function DosaLoadingOverlay({ message }: { message: string }) {
   useEffect(() => {
     const phraseInterval = setInterval(() => {
       setPhraseIdx((prev) => (prev + 1) % loadingPhrases.length);
-    }, 2800);
+    }, 2000);
     
     const elementInterval = setInterval(() => {
       setActiveElementIdx((prev) => (prev + 1) % elements.length);
@@ -457,7 +463,10 @@ export default function Home() {
               )}
             </AnimatePresence>
 
-            <h2 className="text-4xl mb-6 font-mystic font-light text-accent decor-accent">Jay Dosa의 천명(天命) 지도</h2>
+            <h2 className="text-4xl md:text-5xl mb-8 font-mystic font-light text-accent decor-accent text-center leading-tight">
+              Jay 도사의<br />
+              천명(天命) 지도
+            </h2>
             <div className="mb-10 max-w-md mx-auto font-mystic font-light tracking-[0.1em] text-center leading-[2]">
               <span className="text-xl text-blue-50/90 inline-block">
                 당신의 <span className="text-accent drop-shadow-[0_0_8px_rgba(241,229,172,0.6)]">운명에 새겨진 코드</span>,<br />
@@ -473,7 +482,7 @@ export default function Home() {
             <div className="mt-12 w-full flex flex-col items-center">
               <div className="glass p-6 md:p-10 rounded-[2.5rem] border border-accent/20 w-full max-w-2xl shadow-[0_0_40px_rgba(241,229,172,0.05)] relative bg-[#050810]/50">
                 <label className="block text-sm md:text-base uppercase tracking-[0.3em] mb-10 opacity-80 text-center font-bold flex items-center justify-center gap-3 font-mystic text-accent/80">
-                  <span className="text-2xl drop-shadow-md">☯</span> 당신의 천기(天氣) 입력
+                  당신의 천기(天氣) 입력
                 </label>
                 
                 <div className="flex flex-col gap-6">

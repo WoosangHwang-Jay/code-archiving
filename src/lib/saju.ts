@@ -122,9 +122,10 @@ export function calculateSaju(date: Date): SajuResult {
     relations: pseudoRand(8),
   };
 
-  // 7. Generate Luck Wave (100-year trend)
+  // 7. Generate Luck Wave (100-year trend starting from birth)
   const luckWave = Array.from({ length: 11 }, (_, i) => {
-    const targetYear = year + (i * 10) - 20; // 20 years past to 80 years future
+    const age = i * 10;
+    const targetYear = year + age;
     const waveSeed = seed + targetYear;
     const waveVal = Math.sin(waveSeed * 0.1) * 30 + 50 + (Math.cos(waveSeed * 0.5) * 10);
     return { year: targetYear, value: Math.max(10, Math.min(95, waveVal)) };

@@ -81,19 +81,19 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
           <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-accent/50" />
         </div>
         <h1 className="text-3xl md:text-4xl font-mystic tracking-widest text-accent drop-shadow-[0_0_10px_rgba(241,229,172,0.5)]">
-          {userName}님의 사주 총운
+          {userName}의 사주 총운
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Left Column: Elements */}
-        <div className="glass p-8 rounded-3xl border border-white/5 bg-white/5 backdrop-blur-md">
-          <h2 className="text-xl font-mystic mb-8 text-accent/80 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-accent rounded-full" />
+      <div className="flex flex-col gap-12">
+        {/* Top: Elements (Full Width) */}
+        <div className="glass p-8 md:p-12 rounded-[2.5rem] border border-white/5 bg-white/5 backdrop-blur-md">
+          <h2 className="text-2xl font-mystic mb-10 text-accent/80 flex items-center gap-3">
+            <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
             오행 분포 현황
           </h2>
           
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
             {(Object.keys(ELEMENT_MAP) as Array<keyof typeof ELEMENT_MAP>).map((key) => {
               const count = elements[key];
               const percentage = Math.round((count / totalElements) * 100);
@@ -101,11 +101,11 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
               
               return (
                 <div key={key} className="relative group">
-                  <div className="flex justify-between items-end mb-2">
-                    <span className={`font-mystic ${config.text} text-sm md:text-base`}>{config.label}</span>
-                    <span className="text-xs opacity-50">{percentage}%</span>
+                  <div className="flex justify-between items-end mb-3">
+                    <span className={`font-mystic ${config.text} text-lg md:text-xl`}>{config.label}</span>
+                    <span className="text-sm opacity-50">{percentage}%</span>
                   </div>
-                  <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                  <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${percentage}%` }}
@@ -118,8 +118,8 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
             })}
           </div>
 
-          <div className="mt-10 p-4 border border-accent/10 bg-accent/5 rounded-2xl">
-            <p className="text-sm font-mystic text-accent/60 leading-relaxed">
+          <div className="mt-12 p-6 border border-accent/10 bg-accent/5 rounded-3xl">
+            <p className="text-base md:text-lg font-mystic text-accent/70 leading-relaxed text-center md:text-left">
               <span className="text-accent font-bold">부족한 기운 :</span>{' '}
               {Object.entries(elements)
                 .filter(([_, v]) => v === 0)
@@ -129,89 +129,115 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
           </div>
         </div>
 
-        {/* Right Column: Radar Chart & Bagua */}
-        <div className="relative flex items-center justify-center min-h-[400px]">
-          {/* Central Bagua Diagram */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8, rotate: -30 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-            transition={{ duration: 2 }}
-            className="absolute inset-0 flex items-center justify-center opacity-40"
-          >
-            <div className="relative w-full h-full max-w-[400px] max-h-[400px]">
-              <img id="saju-bagua-image" src="/assets/saju-bagua.png" alt="Bagua" className="w-full h-full object-contain animate-[spin_60s_linear_infinite]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050810] via-transparent to-transparent" />
-            </div>
-          </motion.div>
+        {/* Bottom: Radar Chart & Bagua (Full Width) */}
+        <div className="glass p-8 md:p-12 rounded-[2.5rem] border border-white/5 bg-white/5 backdrop-blur-md flex flex-col items-center">
+          <h2 className="text-2xl font-mystic mb-6 text-accent/80 flex items-center gap-3 self-start">
+            <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+            천기(天氣) 밸런스 분석
+          </h2>
+          
+          <div className="relative flex items-center justify-center w-full max-w-[500px] aspect-square">
+            {/* Central Bagua Diagram */}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8, rotate: -30 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ duration: 2 }}
+              className="absolute inset-0 flex items-center justify-center opacity-40"
+            >
+              <div className="relative w-full h-full max-w-[450px] max-h-[450px]">
+                <img id="saju-bagua-image" src="/assets/saju-bagua.png" alt="Bagua" className="w-full h-full object-contain animate-[spin_80s_linear_infinite]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050810] via-transparent to-transparent" />
+              </div>
+            </motion.div>
 
-          {/* Radar Chart Overlay */}
-          <div className="relative z-10 w-full max-w-[350px]">
-            <svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-[0_0_20px_rgba(241,229,172,0.3)]">
-              {/* Background Hexagons */}
-              {[1, 0.8, 0.6, 0.4, 0.2].map((scale) => {
-                const points = radarCategories.map((_, i) => {
+            {/* Radar Chart Overlay */}
+            <div className="relative z-10 w-full h-full p-4 md:p-8">
+              <svg viewBox="0 0 380 380" className="w-full h-full drop-shadow-[0_0_30px_rgba(241,229,172,0.2)]">
+                {/* Background Hexagons */}
+                {[1, 0.8, 0.6, 0.4, 0.2].map((scale) => {
+                  const points = radarCategories.map((_, i) => {
+                    const angle = (Math.PI * 2 * i) / radarCategories.length - Math.PI / 2;
+                    const r = 110 * scale;
+                    return `${190 + r * Math.cos(angle)},${190 + r * Math.sin(angle)}`;
+                  }).join(' ');
+                  return (
+                    <polygon key={scale} points={points} fill="none" stroke="rgba(241,229,172,0.15)" strokeWidth="1" />
+                  );
+                })}
+                
+                {/* Axis Lines */}
+                {radarCategories.map((_, i) => {
                   const angle = (Math.PI * 2 * i) / radarCategories.length - Math.PI / 2;
-                  const r = 120 * scale;
-                  return `${150 + r * Math.cos(angle)},${150 + r * Math.sin(angle)}`;
-                }).join(' ');
-                return (
-                  <polygon key={scale} points={points} fill="none" stroke="rgba(241,229,172,0.1)" strokeWidth="1" />
-                );
-              })}
-              
-              {/* Axis Lines */}
-              {radarCategories.map((_, i) => {
-                const angle = (Math.PI * 2 * i) / radarCategories.length - Math.PI / 2;
-                return (
-                  <line 
-                    key={i} 
-                    x1="150" y1="150" 
-                    x2={150 + 120 * Math.cos(angle)} 
-                    y2={150 + 120 * Math.sin(angle)} 
-                    stroke="rgba(241,229,172,0.1)" 
-                    strokeWidth="1" 
-                  />
-                );
-              })}
+                  return (
+                    <line 
+                      key={i} 
+                      x1="190" y1="190" 
+                      x2={190 + 110 * Math.cos(angle)} 
+                      y2={190 + 110 * Math.sin(angle)} 
+                      stroke="rgba(241,229,172,0.15)" 
+                      strokeWidth="1" 
+                    />
+                  );
+                })}
 
-              {/* Data Polygon */}
-              <motion.polygon 
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 0.6, scale: 1 }}
-                transition={{ delay: 0.5, duration: 1 }}
-                points={getRadarPoints(fortuneScores, 300)} 
-                fill="url(#radarGradient)" 
-                stroke="#f1e5ac" 
-                strokeWidth="2" 
-              />
-              
-              <defs>
-                <linearGradient id="radarGradient" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#f1e5ac" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#d4af37" stopOpacity="0.4" />
-                </linearGradient>
-              </defs>
+                {/* Data Polygon */}
+                <motion.polygon 
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 0.65, scale: 1 }}
+                  transition={{ delay: 0.5, duration: 1 }}
+                  points={radarCategories.map((cat, i) => {
+                    const angle = (Math.PI * 2 * i) / radarCategories.length - Math.PI / 2;
+                    const score = fortuneScores[cat.key] / 100;
+                    const r = 110 * score;
+                    return `${190 + r * Math.cos(angle)},${190 + r * Math.sin(angle)}`;
+                  }).join(' ')} 
+                  fill="url(#radarGradient)" 
+                  stroke="#f1e5ac" 
+                  strokeWidth="2.5" 
+                />
+                
+                <defs>
+                  <linearGradient id="radarGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#f1e5ac" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#d4af37" stopOpacity="0.4" />
+                  </linearGradient>
+                </defs>
 
-              {/* Labels */}
-              {radarCategories.map((cat, i) => {
-                const angle = (Math.PI * 2 * i) / radarCategories.length - Math.PI / 2;
-                const r = 140;
-                const x = 150 + r * Math.cos(angle);
-                const y = 150 + r * Math.sin(angle);
-                return (
-                  <text 
-                    key={cat.key} 
-                    x={x} y={y} 
-                    textAnchor="middle" 
-                    dominantBaseline="middle" 
-                    fill="#f1e5ac" 
-                    className="text-[10px] uppercase font-mystic opacity-70"
-                  >
-                    {cat.label}
-                  </text>
-                );
-              })}
-            </svg>
+                {/* Labels with Background Pills for Maximum Visibility */}
+                {radarCategories.map((cat, i) => {
+                  const angle = (Math.PI * 2 * i) / radarCategories.length - Math.PI / 2;
+                  const r = 145; // Moved out slightly in the larger canvas
+                  const x = 190 + r * Math.cos(angle);
+                  const y = 190 + r * Math.sin(angle);
+                  
+                  // Calculate dynamic width based on text length
+                  const labelWidth = cat.label.length * 16 + 24;
+                  
+                  return (
+                    <g key={cat.key}>
+                      <rect 
+                        x={x - labelWidth / 2} 
+                        y={y - 14} 
+                        width={labelWidth} 
+                        height="28" 
+                        rx="14" 
+                        fill="rgba(5, 8, 16, 0.95)" 
+                        className="stroke-accent/40 stroke-[1px]"
+                      />
+                      <text 
+                        x={x} y={y} 
+                        textAnchor="middle" 
+                        dominantBaseline="middle" 
+                        fill="#f1e5ac" 
+                        className="text-[14px] md:text-[16px] font-mystic font-bold"
+                      >
+                        {cat.label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
           </div>
         </div>
       </div>
@@ -268,9 +294,8 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
                 <g key={p.year}>
                   {isCurrent && (
                     <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 2 }}>
-                       <circle cx={x} cy={y} r="6" fill="#f1e5ac" className="animate-ping opacity-50" />
-                       <circle cx={x} cy={y} r="4" fill="#f1e5ac" />
-                       <text x={x} y={y - 12} textAnchor="middle" fill="#f1e5ac" className="text-[10px] font-bold">현재</text>
+                       <circle cx={x} cy={y} r="4" fill="#f1e5ac" className="drop-shadow-[0_0_8px_rgba(241,229,172,0.8)]" />
+                       <text x={x} y={y - 14} textAnchor="middle" fill="#f1e5ac" className="text-[11px] font-bold">현재</text>
                     </motion.g>
                   )}
                   <text x={x} y="158" textAnchor="middle" fill="white" className="text-[9px] opacity-30">{p.year}년</text>
