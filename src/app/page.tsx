@@ -29,7 +29,7 @@ interface TarotCard {
   meaning: string;
 }
 
-type Step = 'input' | 'saju_report' | 'tarot_picking' | 'final_report';
+type Step = 'input' | 'saju_report' | 'tarot_picking' | 'tarot_revealing' | 'final_report';
 
 const ELEMENT_COLORS: Record<string, string> = {
   wood: 'bg-green-600',
@@ -49,8 +49,8 @@ function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = fals
 }) {
   return (
     <motion.div
-      className="relative w-full aspect-[2/3] cursor-pointer preserve-3d"
-      whileHover={!isSelected ? { y: -10, scale: 1.05 } : {}}
+      className="relative w-full h-full aspect-[2/3] cursor-pointer preserve-3d"
+      whileHover={onClick && !isSelected ? { y: -10, scale: 1.05 } : {}}
       onClick={onClick}
       initial={false}
       animate={{ rotateY: isFlipped ? 180 : 0 }}
@@ -111,15 +111,15 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
 
   const tarotPhrases = [
     "민화 속 상징물과 교감 중...",
-    "카드의 기운을 현재와 연결 중...",
+    "카드의 이미지를 현재와 연결 중...",
     "과거, 현재, 미래의 영적 실타래 분석...",
-    "명운과 타로의 신비로운 조화 연산 중...",
+    "선택하신 카드의 신비로운 의미 연산 중...",
     "Jay 도사의 영적 직관 필터 적용...",
     "한지 속에 숨은 우주의 비밀 추출 중...",
     "운명의 카드가 전하는 메시지 수신 중...",
     "인연과 타이밍의 퀀텀 매칭...",
     "영적 주파수 튜닝 중...",
-    "천기와 타로의 신비로운 조화 분석 중..."
+    "민화 타로의 신비로운 계시 분석 중..."
   ];
 
   const loadingPhrases = mode === 'tarot' ? tarotPhrases : sajuPhrases;
@@ -270,8 +270,8 @@ const LatticeCorner = () => (
 );
 
 // 재사용 가능한 전통 스타일 폼 박스
-const InputBox = ({ children }: { children: React.ReactNode }) => (
-  <div className="relative w-full rounded-xl border border-accent/40 bg-[#0a0e17]/90 backdrop-blur-xl transition-all focus-within:border-accent focus-within:bg-[#151a25] overflow-hidden shadow-[inset_0_0_20px_rgba(241,229,172,0.05)] flex items-center min-h-[64px] md:min-h-[74px] group px-4 md:px-8">
+const InputBox = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+  <div className={`relative w-full rounded-xl border border-accent/40 bg-[#0a0e17]/90 backdrop-blur-xl transition-all focus-within:border-accent focus-within:bg-[#151a25] overflow-hidden shadow-[inset_0_0_20px_rgba(241,229,172,0.05)] flex items-center min-h-[64px] md:min-h-[74px] group px-4 md:px-8 ${className}`}>
     <LatticeCorner />
     <div className="w-full flex items-center justify-between relative z-10">
       {children}
@@ -282,7 +282,15 @@ const InputBox = ({ children }: { children: React.ReactNode }) => (
 export default function Home() {
 
   const [step, setStep] = useState<Step>('input');
-  const [birthData, setBirthData] = useState({ year: '', month: '', day: '', hour: '', minute: '' });
+  const [birthData, setBirthData] = useState({ 
+    year: '', 
+    month: '', 
+    day: '', 
+    hour: '', 
+    minute: '',
+    gender: 'male' as 'male' | 'female',
+    isLunar: false
+  });
   const [sajuResult, setSajuResult] = useState<SajuData | null>(null);
   const [shuffledDeck, setShuffledDeck] = useState<TarotCard[]>([]);
   const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
@@ -291,6 +299,10 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [activePopSpirit, setActivePopSpirit] = useState<string | null>(null);
+  const [revealingIndex, setRevealingIndex] = useState(0);
+  const [shuffleStatus, setShuffleStatus] = useState<'idle' | 'shuffling' | 'dealt'>('idle');
+  const [dealtCards, setDealtCards] = useState<TarotCard[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [prevZodiac, setPrevZodiac] = useState<string | null>(null);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -313,39 +325,105 @@ export default function Home() {
       setActivePopSpirit(null);
     }
   }, [birthData.hour, birthData.minute, prevZodiac]);
+  
+  // 3. Card Revelation Sequence Logic
+  useEffect(() => {
+    if (step === 'tarot_revealing') {
+      if (revealingIndex < 3) {
+        const timer = setTimeout(() => {
+          setRevealingIndex(prev => prev + 1);
+        }, 2000); // 1s for flip animation + 1s for stay = 2s total cycle
+        return () => clearTimeout(timer);
+      } else {
+        // All cards revealed, fetch interpretation
+        getFinalInterpretation();
+      }
+    }
+  }, [step, revealingIndex]);
 
   // 2. Automatically hide the spirit after a delay
   useEffect(() => {
     if (activePopSpirit) {
       const timer = setTimeout(() => {
         setActivePopSpirit(null);
-      }, 2000);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [activePopSpirit]);
 
+  const validateField = (name: string, value: string) => {
+    const num = parseInt(value);
+    if (!value) return "";
+
+    switch (name) {
+      case 'year':
+        if (num < 1900 || num > 2100) return "1900~2100년 사이 입력";
+        break;
+      case 'month':
+        if (num < 1 || num > 12) return "1~12월 사이 입력";
+        break;
+      case 'day':
+        const year = parseInt(birthData.year) || 2024;
+        const month = parseInt(birthData.month) || 1;
+        const maxDays = new Date(year, month, 0).getDate();
+        if (num < 1 || num > maxDays) return `${month}월은 1~${maxDays}일까지입니다.`;
+        break;
+      case 'hour':
+        if (num < 0 || num > 23) return "0~23시 입력";
+        break;
+      case 'minute':
+        if (num < 0 || num > 59) return "0~59분 입력";
+        break;
+    }
+    return "";
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numericValue = value.replace(/[^0-9]/g, '').slice(0, name === 'year' ? 4 : 2);
+    setBirthData({ ...birthData, [name]: numericValue });
+    if (errors[name]) setErrors({ ...errors, [name]: "" });
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setErrors(prev => ({ ...prev, [name]: validateField(name, value) }));
+  };
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value; // YYYY-MM-DD
+    const val = e.target.value;
     if (!val) return;
     const [y, m, d] = val.split('-');
     setBirthData(prev => ({ ...prev, year: y, month: m, day: d }));
+    setErrors(prev => ({ ...prev, year: "", month: "", day: "" }));
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value; // HH:mm
+    const val = e.target.value;
     if (!val) return;
     const [h, mi] = val.split(':');
     setBirthData(prev => ({ ...prev, hour: h, minute: mi }));
+    setErrors(prev => ({ ...prev, hour: "", minute: "" }));
   };
 
   const handleSajuStart = async () => {
-    const { year, month, day, hour, minute } = birthData;
-    if (!year || !month || !day) {
-      alert("생년월일(연, 월, 일)을 모두 입력해주세요!");
+    const newErrors: Record<string, string> = {};
+    ['year', 'month', 'day'].forEach(key => {
+      const val = (birthData as any)[key];
+      const err = validateField(key, val);
+      if (err) newErrors[key] = err;
+      if (!val) newErrors[key] = "필수 입력";
+    });
+
+    if (Object.values(newErrors).some(err => err)) {
+      setErrors(newErrors);
+      alert("입력하신 정보를 다시 확인해주세요.");
       return;
     }
+
     setLoading(true);
     
+    const { year, month, day, hour, minute } = birthData;
     const paddedMonth = month.padStart(2, '0');
     const paddedDay = day.padStart(2, '0');
     let dateStr = `${year}-${paddedMonth}-${paddedDay}`;
@@ -375,15 +453,32 @@ export default function Home() {
   };
 
   const handleGoToTarot = () => {
-    setShuffledDeck(getShuffledDeck());
+    setShuffleStatus('idle');
+    setDealtCards([]);
     setSelectedCards([]);
     setStep('tarot_picking');
+  };
+
+  const handleShuffle = () => {
+    setShuffleStatus('shuffling');
+    // Simulate mysterious shuffling time
+    setTimeout(() => {
+      const fullDeck = getShuffledDeck();
+      setDealtCards(fullDeck.slice(0, 12)); // Deal 12 cards
+      setShuffleStatus('dealt');
+    }, 1800);
   };
 
   const handlePickCard = (card: TarotCard) => {
     if (selectedCards.length >= 3) return;
     if (selectedCards.find(c => c.id === card.id)) return;
     setSelectedCards([...selectedCards, card]);
+  };
+
+  const startRevelation = () => {
+    if (selectedCards.length < 3) return;
+    setRevealingIndex(0);
+    setStep('tarot_revealing');
   };
 
   const getFinalInterpretation = async () => {
@@ -411,8 +506,8 @@ export default function Home() {
       <AnimatePresence>
         {loading && (
           <DosaLoadingOverlay 
-            message={step === 'tarot_picking' ? "운명의 실타래를 엮고 있습니다..." : "천기를 읽는 중입니다..."} 
-            mode={step === 'tarot_picking' ? 'tarot' : 'saju'} 
+            message={['tarot_picking', 'tarot_revealing', 'final_report'].includes(step) ? "운명의 실타래를 엮고 있습니다..." : "천기를 읽는 중입니다..."} 
+            mode={['tarot_picking', 'tarot_revealing', 'final_report'].includes(step) ? 'tarot' : 'saju'} 
           />
         )}
       </AnimatePresence>
@@ -509,7 +604,6 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Horizontal 2-Row Stacked Form Panel */}
             <div className="mt-12 w-full flex flex-col items-center">
               <div className="glass p-6 md:p-10 rounded-[2.5rem] border border-accent/20 w-full max-w-2xl shadow-[0_0_40px_rgba(241,229,172,0.05)] relative bg-[#050810]/50">
                 <label className="block text-sm md:text-base uppercase tracking-[0.3em] mb-10 opacity-80 text-center font-bold flex items-center justify-center gap-3 font-mystic text-accent/80">
@@ -519,22 +613,21 @@ export default function Home() {
                 <div className="flex flex-col gap-6">
                   {/* Date Form Row */}
                   <div className="w-full flex flex-col gap-2 relative">
-                    <InputBox>
+                    <InputBox className={errors.year || errors.month || errors.day ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : ''}>
                       <div className="flex-1 flex items-center justify-center relative gap-1 md:gap-0">
-                        <input type="number" placeholder="YYYY" min="0" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                        <input type="number" name="year" placeholder="YYYY" min="1900" max="2100"
                           className="w-[80px] sm:w-[140px] md:w-[170px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-[0.1em] placeholder:text-accent/30 text-accent"
-                          value={birthData.year} onChange={(e) => setBirthData({ ...birthData, year: e.target.value })} />
+                          value={birthData.year} onChange={handleInputChange} onBlur={handleBlur} />
                         <span className="opacity-60 mx-0.5 md:mx-4 text-xl md:text-2xl font-light font-sans text-accent">/</span>
-                        <input type="number" placeholder="MM" min="1" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                        <input type="number" name="month" placeholder="MM" min="1" max="12"
                           className="w-[60px] sm:w-[90px] md:w-[110px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-[0.1em] placeholder:text-accent/30 text-accent"
-                          value={birthData.month} onChange={(e) => setBirthData({ ...birthData, month: e.target.value })} />
+                          value={birthData.month} onChange={handleInputChange} onBlur={handleBlur} />
                         <span className="opacity-60 mx-0.5 md:mx-4 text-xl md:text-2xl font-light font-sans text-accent">/</span>
-                        <input type="number" placeholder="DD" min="1" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                        <input type="number" name="day" placeholder="DD" min="1" max="31"
                           className="w-[60px] sm:w-[90px] md:w-[110px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-[0.1em] placeholder:text-accent/30 text-accent"
-                          value={birthData.day} onChange={(e) => setBirthData({ ...birthData, day: e.target.value })} />
+                          value={birthData.day} onChange={handleInputChange} onBlur={handleBlur} />
                       </div>
                       
-                      {/* Calendar Icon Right (clickable) */}
                       <div 
                         className="pl-4 text-accent/50 opacity-60 hover:opacity-100 hover:text-accent group-focus-within:opacity-100 transition-all cursor-pointer"
                         onClick={() => dateInputRef.current?.showPicker()}
@@ -545,7 +638,6 @@ export default function Home() {
                           <line x1="8" y1="2" x2="8" y2="6"></line>
                           <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
-                        {/* Hidden native input */}
                         <input 
                           type="date" 
                           ref={dateInputRef} 
@@ -554,27 +646,30 @@ export default function Home() {
                         />
                       </div>
                     </InputBox>
+                    {(errors.year || errors.month || errors.day) && (
+                      <div className="text-red-400 text-xs mt-2 text-center font-mystic animate-pulse">
+                        {errors.year || errors.month || errors.day}
+                      </div>
+                    )}
                   </div>
 
                   {/* Time Form Row */}
                   <div className="w-full flex-col flex items-start gap-2">
-                    <InputBox>
+                    <InputBox className={errors.hour || errors.minute ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : ''}>
                       <div className="flex-1 flex items-center justify-center relative gap-1 md:gap-0">
-                        <input type="number" placeholder="HH" min="0" max="23" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
+                        <input type="number" name="hour" placeholder="HH" min="0" max="23"
                           className="w-[70px] sm:w-[100px] md:w-[120px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-widest placeholder:text-accent/30 text-accent"
-                          value={birthData.hour} onChange={(e) => setBirthData({ ...birthData, hour: e.target.value })} />
-                        <span className="opacity-60 mx-0.5 md:mx-4 text-xl md:text-2xl font-light font-sans text-accent">:</span>
-                        <input type="number" placeholder="MM" min="0" max="59" onKeyDown={(e) => ["e", "E", "+", "-"].includes(e.key) && e.preventDefault()}
-                          className="w-[70px] sm:w-[110px] md:w-[130px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-widest placeholder:text-accent/30 text-accent"
-                          value={birthData.minute} onChange={(e) => setBirthData({ ...birthData, minute: e.target.value })} />
+                          value={birthData.hour} onChange={handleInputChange} onBlur={handleBlur} />
+                        <span className="opacity-60 mx-1 md:mx-4 text-xl md:text-2xl font-light font-sans text-accent">:</span>
+                        <input type="number" name="minute" placeholder="MM" min="0" max="59"
+                          className="w-[70px] sm:w-[100px] md:w-[120px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-widest placeholder:text-accent/30 text-accent"
+                          value={birthData.minute} onChange={handleInputChange} onBlur={handleBlur} />
                       </div>
                       
-                      {/* Zodiac or Clock Icon Right (clickable) */}
                       <div 
                         className="pl-4 ml-2 border-l border-accent/20 min-w-[40px] flex items-center justify-center cursor-pointer group/icon"
                         onClick={() => timeInputRef.current?.showPicker()}
                       >
-                        {/* Show zodiac icon only when BOTH hour and minute are entered */}
                         {birthData.hour && birthData.minute && getZodiacByHour(birthData.hour) ? (
                           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1.5 md:gap-2">
                             <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden bg-black/40 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
@@ -599,7 +694,6 @@ export default function Home() {
                             </svg>
                           </div>
                         )}
-                        {/* Hidden native input */}
                         <input 
                           type="time" 
                           ref={timeInputRef} 
@@ -608,9 +702,25 @@ export default function Home() {
                         />
                       </div>
                     </InputBox>
+                    {(errors.hour || errors.minute) && (
+                      <div className="text-red-400 text-xs mt-2 text-center font-mystic animate-pulse">
+                        {errors.hour || errors.minute}
+                      </div>
+                    )}
                   </div>
                 </div>
                 
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10">
+                  <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-inner">
+                    <button onClick={() => setBirthData({ ...birthData, gender: 'male' })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${birthData.gender === 'male' ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>MALE (남)</button>
+                    <button onClick={() => setBirthData({ ...birthData, gender: 'female' })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${birthData.gender === 'female' ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>FEMALE (여)</button>
+                  </div>
+                  
+                  <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-inner">
+                    <button onClick={() => setBirthData({ ...birthData, isLunar: false })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${!birthData.isLunar ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>SOLAR (양)</button>
+                    <button onClick={() => setBirthData({ ...birthData, isLunar: true })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${birthData.isLunar ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>LUNAR (음)</button>
+                  </div>
+                </div>
               </div>
 
               <motion.button 
@@ -622,13 +732,11 @@ export default function Home() {
               >
                 <span className="relative z-10">{loading ? '천기를 읽는 중...' : '나의 천명 읽기'}</span>
                 
-                {/* Silver/White Shine Ripple Effect on Hover */}
                 <motion.div 
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-45 -translate-x-[200%] group-hover:animate-[shine_1.5s_infinite]"
                   initial={false}
                 />
                 
-                {/* Active Ripple Wave */}
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-active:opacity-100 transition-opacity duration-300 scale-0 group-active:scale-150 rounded-full" />
               </motion.button>
             </div>
@@ -709,49 +817,171 @@ export default function Home() {
         {step === 'tarot_picking' && (
           <motion.section key="tarot_pick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full text-center flex flex-col items-center">
             <h2 className="text-4xl mb-6 font-mystic italic tracking-[0.2em] text-accent decor-accent">DIVINE CHOICE</h2>
-            <p className="opacity-60 mb-12 max-w-lg leading-relaxed">
-              마음을 비우고, 민화 속 호랑이와 까치가 전하는 소리에 귀를 기울이세요.<br/>
-              운명이 이끄는 대로 3장의 한지를 선택해 주세요.
-            </p>
             
-            <div className="flex gap-4 mb-20 h-28 items-center justify-center w-full">
-              {[0, 1, 2].map(i => (
-                <div key={i} className={`w-16 h-24 rounded-xl border-2 transition-all flex items-center justify-center font-black text-2xl ${
-                  selectedCards[i] ? 'bg-accent border-accent text-background shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'border-white/10 bg-white/5 text-white/10'
-                }`}>
-                  {selectedCards[i] ? i + 1 : '？'}
-                </div>
-              ))}
-            </div>
-            
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-11 gap-4 mb-20 p-8 glass rounded-[3rem] border-accent/20 w-full max-w-5xl">
-              {shuffledDeck.map((card, idx) => (
-                <MinhwaCard 
-                  key={idx} 
-                  index={selectedCards.indexOf(card)} 
-                  isSelected={!!selectedCards.find(c => c.id === card.id)}
-                  onClick={() => handlePickCard(card)} 
-                />
-              ))}
+            <div className="relative w-full max-w-4xl min-h-[400px] flex items-center justify-center mb-12">
+              <AnimatePresence mode="wait">
+                {/* 1. Idle State: Show the deck */}
+                {shuffleStatus === 'idle' && (
+                  <motion.div 
+                    key="idle"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }}
+                    className="flex flex-col items-center"
+                  >
+                    <div className="relative w-40 h-60 mb-12">
+                      {[...Array(5)].map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="absolute inset-0 rounded-xl border-2 border-accent/20 bg-[#1a1630] shadow-2xl" 
+                          style={{ transform: `translate(${i * 2}px, ${-i * 2}px)`, zIndex: -i }}
+                        />
+                      ))}
+                      <div className="absolute inset-0 rounded-xl border-2 border-accent/40 bg-[#1a1630] flex items-center justify-center shadow-[0_0_30px_rgba(241,229,172,0.2)]">
+                        <span className="text-accent/30 text-4xl">✨</span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={handleShuffle}
+                      className="px-10 py-4 bg-accent text-background font-black rounded-full hover:shadow-[0_0_30px_rgba(241,229,172,0.5)] transition-all hover:scale-105 active:scale-95"
+                    >
+                      🃏 운명의 카드 셔플하기
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* 2. Shuffling State: Dynamic Animation */}
+                {shuffleStatus === 'shuffling' && (
+                  <motion.div 
+                    key="shuffling"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center justify-center"
+                  >
+                    <div className="relative w-60 h-60">
+                      {[...Array(12)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          animate={{ 
+                            x: [0, (Math.random() - 0.5) * 300, 0],
+                            y: [0, (Math.random() - 0.5) * 300, 0],
+                            rotate: [0, Math.random() * 360, 0],
+                            opacity: [0.5, 1, 0.5]
+                          }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute top-1/2 left-1/2 -mt-20 -ml-12 w-24 h-40 rounded-lg border border-accent/30 bg-[#1a1630] shadow-xl"
+                        />
+                      ))}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                         <p className="font-mystic text-accent text-2xl animate-pulse">천기를 섞는 중...</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* 3. Dealt State: Show 12 cards in a spread */}
+                {shuffleStatus === 'dealt' && (
+                  <motion.div 
+                    key="dealt"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center w-full"
+                  >
+                    <p className="opacity-60 mb-12 max-w-lg leading-relaxed">
+                      셔플된 카드 중에서 당신의 마음이 머무는 3장을 골라주세요.
+                    </p>
+                    
+                    <div className="flex gap-4 mb-16 h-24 items-center justify-center w-full">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className={`w-14 h-20 rounded-xl border-2 transition-all flex items-center justify-center font-black text-xl ${
+                          selectedCards[i] ? 'bg-accent border-accent text-background shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'border-white/10 bg-white/5 text-white/10'
+                        }`}>
+                          {selectedCards[i] ? i + 1 : '？'}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-4 md:gap-6 p-8 glass rounded-[3rem] border-accent/20 w-full max-w-5xl">
+                      {dealtCards.map((card, idx) => (
+                        <div key={idx} className="w-[80px] sm:w-[100px] md:w-[120px] transition-all hover:-translate-y-4">
+                          <MinhwaCard 
+                            index={selectedCards.indexOf(card)} 
+                            isSelected={!!selectedCards.find(c => c.id === card.id)}
+                            onClick={() => handlePickCard(card)} 
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            <button onClick={getFinalInterpretation} disabled={selectedCards.length < 3 || loading} className="px-16 py-6 bg-accent text-background font-black rounded-full disabled:opacity-20 transition-all hover:scale-110 active:scale-95 shadow-[0_20px_40px_rgba(212,175,55,0.3)] text-xl">
-              {loading ? '신령의 계시를 받는 중...' : '🔮 천기와 타로의 신비로운 조화'}
-            </button>
+            {shuffleStatus === 'dealt' && (
+              <button 
+                onClick={startRevelation} 
+                disabled={selectedCards.length < 3 || loading} 
+                className="px-16 py-6 bg-accent text-background font-black rounded-full disabled:opacity-20 transition-all hover:scale-110 active:scale-95 shadow-[0_20px_40px_rgba(212,175,55,0.3)] text-xl"
+              >
+                {loading ? '신령의 계시를 받는 중...' : '🔮 민화 타로의 계시 받기'}
+              </button>
+            )}
+          </motion.section>
+        )}
+
+        {step === 'tarot_revealing' && (
+          <motion.section 
+            key="tarot_revealing" 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-[#050810]/90 backdrop-blur-xl"
+          >
+            <div className="text-center mb-12">
+              <motion.h2 
+                key={revealingIndex}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-3xl md:text-5xl font-mystic text-accent mb-4"
+              >
+                {revealingIndex === 0 ? "과거의 기운" : revealingIndex === 1 ? "현재의 흐름" : "미래의 계시"}
+              </motion.h2>
+              <p className="text-accent/60 tracking-widest uppercase text-sm">Divine Revelation</p>
+            </div>
+
+            <div className="relative w-64 md:w-80 aspect-[2/3] perspective-1000">
+              <AnimatePresence mode="wait">
+                {revealingIndex < 3 && (
+                  <motion.div
+                    key={selectedCards[revealingIndex].id}
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.5, filter: 'blur(20px)' }}
+                    transition={{ duration: 0.8 }}
+                    className="w-full h-full"
+                  >
+                    <MinhwaCard card={selectedCards[revealingIndex]} index={revealingIndex} isFlipped={true} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="mt-16 flex gap-4">
+              {[0, 1, 2].map(i => (
+                <div key={i} className={`w-3 h-3 rounded-full transition-all duration-500 ${i <= revealingIndex ? 'bg-accent shadow-[0_0_10px_rgba(241,229,172,0.8)]' : 'bg-white/10'}`} />
+              ))}
+            </div>
           </motion.section>
         )}
 
         {step === 'final_report' && sajuResult && (
           <motion.section key="final_report" id="report-section" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-12">
-            {/* Integrated Saju Dashboard at the top of the report */}
-            <div className="no-export mb-8 text-center text-accent/40 text-sm tracking-[0.3em] font-mystic">INTEGRATED FATE REPORT</div>
-            <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
-
             <div className="glass p-5 md:p-12 rounded-[2.5rem] md:rounded-[4rem] border-accent shadow-[0_60px_100px_rgba(0,0,0,0.7)] relative overflow-hidden bg-[#050810]/80">
               <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-[100px]" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px]" />
 
-              <h2 className="text-3xl md:text-5xl mb-12 md:mb-20 font-mystic text-center decor-accent leading-tight">🔮 천기와 타로의<br/>신비로운 조화</h2>
+              <h2 className="text-3xl md:text-5xl mb-12 md:mb-20 font-mystic text-center decor-accent leading-tight">🔮 민화 타로의<br/>신비로운 계시</h2>
               
               {/* Tarot Cards Selection for the report */}
               <div className="flex flex-col md:flex-row gap-10 justify-center mb-16 md:mb-20 px-4 md:px-10">
@@ -797,6 +1027,15 @@ export default function Home() {
                 </button>
                 <button onClick={() => setStep('input')} className="flex-1 bg-white/5 py-5 rounded-[1.5rem] hover:bg-white/10 transition-all font-bold opacity-60">다시 보기</button>
               </div>
+            </div>
+
+            {/* Saju Dashboard as a secondary/supplementary info at the bottom */}
+            <div className="mt-20 opacity-50 hover:opacity-100 transition-opacity no-export">
+               <div className="text-center mb-8">
+                 <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-accent/20 to-transparent mb-4" />
+                 <p className="text-xs uppercase tracking-[0.4em] font-mystic text-accent/40">Base Fate Profile (Saju)</p>
+               </div>
+               <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
             </div>
           </motion.section>
         )}

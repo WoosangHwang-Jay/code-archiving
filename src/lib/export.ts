@@ -95,7 +95,7 @@ export const exportToPDF = async (elementId: string, filename: string) => {
       }
     });
 
-    document.head.removeChild(style);
+
 
     const imgData = canvas.toDataURL('image/jpeg', 1.0);
     const pdf = new jsPDF({
