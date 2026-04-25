@@ -65,6 +65,15 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
       }).join(' ');
   };
 
+  // Mandala Orbs Calculation
+  const mandalaElements = [
+    { key: 'fire', label: '火 (Fire)', color: '#ef4444', desc: 'Activity & Passion', angle: 0 },
+    { key: 'wood', label: '木 (Wood)', color: '#22c55e', desc: 'Growth & Expansion', angle: 72 },
+    { key: 'earth', label: '土 (Earth)', color: '#ca8a04', desc: 'Stability & Foundation', angle: 144 },
+    { key: 'metal', label: '金 (Metal)', color: '#94a3b8', desc: 'Clarity & Refinement', angle: 216 },
+    { key: 'water', label: '水 (Water)', color: '#3b82f6', desc: 'Flow & Wisdom', angle: 288 },
+  ] as const;
+
   return (
     <div className="w-full bg-[#050810] text-blue-50 p-6 md:p-10 rounded-[3rem] border border-accent/20 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden relative">
       {/* Background Glow */}
@@ -81,50 +90,129 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
           <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-accent/50" />
         </div>
         <h1 className="text-3xl md:text-4xl font-mystic tracking-widest text-accent drop-shadow-[0_0_10px_rgba(241,229,172,0.5)]">
-          {userName}의 사주 총운
+          {userName}의 천기(天氣) 총운
         </h1>
       </div>
 
       <div className="flex flex-col gap-12">
-        {/* Top: Elements (Full Width) */}
-        <div className="glass p-8 md:p-12 rounded-[2.5rem] border border-white/5 bg-white/5 backdrop-blur-md">
-          <h2 className="text-2xl font-mystic mb-10 text-accent/80 flex items-center gap-3">
+        {/* Top: Mandala Visualization */}
+        <div className="glass p-8 md:p-12 rounded-[2.5rem] border border-white/5 bg-white/5 backdrop-blur-md flex flex-col items-center">
+          <h2 className="text-2xl font-mystic mb-10 text-accent/80 flex items-center gap-3 self-start">
             <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-            오행 분포 현황
+            오행 순환 만다라 (Mandala)
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-            {(Object.keys(ELEMENT_MAP) as Array<keyof typeof ELEMENT_MAP>).map((key) => {
-              const count = elements[key];
+          <div className="relative w-full max-w-[600px] aspect-square flex items-center justify-center">
+            <svg viewBox="0 0 400 400" className="w-full h-full overflow-visible drop-shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+              {/* Outer Cycle Lines (Generation) */}
+              <circle cx="200" cy="200" r="140" fill="none" stroke="rgba(241,229,172,0.1)" strokeWidth="1" strokeDasharray="5 5" />
+              
+              {/* Inner Pentagram Lines (Control) - Hidden in PDF for clarity */}
+              <g className="no-export opacity-20">
+                {mandalaElements.map((el, i) => {
+                  const nextIdx = (i + 2) % 5;
+                  const nextEl = mandalaElements[nextIdx];
+                  const x1 = 200 + 140 * Math.sin((el.angle * Math.PI) / 180);
+                  const y1 = 200 - 140 * Math.cos((el.angle * Math.PI) / 180);
+                  const x2 = 200 + 140 * Math.sin((nextEl.angle * Math.PI) / 180);
+                  const y2 = 200 - 140 * Math.cos((nextEl.angle * Math.PI) / 180);
+                  return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="white" strokeWidth="0.5" />;
+                })}
+              </g>
+
+              {/* Element Orbs */}
+              {mandalaElements.map((el) => {
+                const count = elements[el.key as keyof typeof elements] || 0;
+                const percentage = Math.round((count / totalElements) * 100);
+                const radius = 25 + (percentage / 100) * 45; // Dynamic size based on strength
+                const x = 200 + 140 * Math.sin((el.angle * Math.PI) / 180);
+                const y = 200 - 140 * Math.cos((el.angle * Math.PI) / 180);
+
+                return (
+                  <g key={el.key}>
+                    {/* Glow Effect */}
+                    <motion.circle 
+                      initial={{ opacity: 0, r: 0 }}
+                      animate={{ opacity: 0.3, r: radius * 1.5 }}
+                      transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                      cx={x} cy={y} 
+                      fill={el.color} 
+                      className="blur-xl"
+                    />
+                    
+                    {/* Main Orb */}
+                    <motion.circle 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 100, damping: 10, delay: 0.5 }}
+                      cx={x} cy={y} r={radius} 
+                      fill={`url(#grad-${el.key})`}
+                      stroke="rgba(255,255,255,0.2)"
+                      strokeWidth="1"
+                    />
+                    
+                    {/* Label Text */}
+                    <text 
+                      x={x} y={y + radius + 25} 
+                      textAnchor="middle" 
+                      className="text-[14px] font-mystic fill-accent font-bold"
+                    >
+                      {el.label}
+                    </text>
+                    <text 
+                      x={x} y={y + radius + 42} 
+                      textAnchor="middle" 
+                      className="text-[12px] fill-white/40 uppercase tracking-widest"
+                    >
+                      {percentage}%
+                    </text>
+
+                    {/* Gradients */}
+                    <defs>
+                      <radialGradient id={`grad-${el.key}`} cx="30%" cy="30%" r="70%">
+                        <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+                        <stop offset="50%" stopColor={el.color} />
+                        <stop offset="100%" stopColor="black" stopOpacity="0.6" />
+                      </radialGradient>
+                    </defs>
+                  </g>
+                );
+              })}
+              
+              {/* Central Core */}
+              <circle cx="200" cy="200" r="10" fill="white" className="blur-md opacity-50" />
+            </svg>
+          </div>
+
+          {/* Element Cards Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full mt-16">
+            {mandalaElements.map((el) => {
+              const count = elements[el.key as keyof typeof elements] || 0;
               const percentage = Math.round((count / totalElements) * 100);
-              const config = ELEMENT_MAP[key];
               
               return (
-                <div key={key} className="relative group">
-                  <div className="flex justify-between items-end mb-3">
-                    <span className={`font-mystic ${config.text} text-lg md:text-xl`}>{config.label}</span>
-                    <span className="text-sm opacity-50">{percentage}%</span>
-                  </div>
-                  <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percentage}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                      className={`h-full bg-gradient-to-r ${config.bar}`}
-                    />
-                  </div>
+                <div key={el.key} className="glass p-4 rounded-2xl border border-white/5 flex flex-col items-center text-center group hover:bg-white/10 transition-all">
+                  <div className="w-2 h-2 rounded-full mb-3" style={{ backgroundColor: el.color, boxShadow: `0 0 10px ${el.color}` }} />
+                  <span className="text-xs font-mystic text-accent/60 mb-1">{el.key.toUpperCase()}</span>
+                  <span className="text-sm font-bold text-white mb-2">{percentage}%</span>
+                  <span className="text-[10px] opacity-40 leading-tight">{el.desc}</span>
                 </div>
               );
             })}
           </div>
 
-          <div className="mt-12 p-6 border border-accent/10 bg-accent/5 rounded-3xl">
-            <p className="text-base md:text-lg font-mystic text-accent/70 leading-relaxed text-center md:text-left">
-              <span className="text-accent font-bold">부족한 기운 :</span>{' '}
+          <div className="w-full mt-10 p-6 border border-accent/10 bg-accent/5 rounded-3xl">
+            <p className="text-base md:text-lg font-mystic text-accent/70 leading-relaxed text-center">
+              <span className="text-accent font-bold">기운의 조화 :</span>{' '}
               {Object.entries(elements)
                 .filter(([_, v]) => v === 0)
-                .map(([k, _]) => ELEMENT_MAP[k as keyof typeof ELEMENT_MAP].label)
-                .join(', ') || '오행이 고루 분포되어 있습니다.'}
+                .map(([k, _]) => k.toUpperCase())
+                .join(', ') ? (
+                  `${Object.entries(elements)
+                    .filter(([_, v]) => v === 0)
+                    .map(([k, _]) => k.toUpperCase())
+                    .join(', ')} 기운이 부족하나, 다른 기운들이 이를 보완하고 있습니다.`
+                ) : '오행이 고루 분포되어 조화로운 흐름을 보이고 있습니다.'}
             </p>
           </div>
         </div>

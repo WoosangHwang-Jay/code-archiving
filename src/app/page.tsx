@@ -279,6 +279,31 @@ const InputBox = ({ children, className = "" }: { children: React.ReactNode, cla
   </div>
 );
 
+// Zodiac Image Component with Instant Placeholder
+const ZodiacIcon = ({ hour }: { hour: string }) => {
+  const [isLoaded, setIsLoaded] = React.useState(false);
+  const info = getZodiacByHour(hour);
+  if (!info) return null;
+
+  return (
+    <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden bg-black/40 shadow-[0_0_10px_rgba(0,229,255,0.2)] relative flex items-center justify-center">
+      {/* Instant Emoji Placeholder (Hidden once image loads) */}
+      {!isLoaded && (
+        <span className="text-lg animate-pulse">{info.icon}</span>
+      )}
+      <img 
+        src={`/assets/zodiac/${info.sprite}.png`} 
+        alt="Zodiac"
+        className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setIsLoaded(true)}
+        onError={(e) => {
+          (e.target as HTMLImageElement).style.display = 'none';
+        }}
+      />
+    </div>
+  );
+};
+
 export default function Home() {
 
   const [step, setStep] = useState<Step>('input');
@@ -307,6 +332,15 @@ export default function Home() {
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
+
+  // Preload Zodiac Images
+  useEffect(() => {
+    const sprites = ['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig'];
+    sprites.forEach(sprite => {
+      const img = new Image();
+      img.src = `/assets/zodiac/${sprite}.png`;
+    });
+  }, []);
 
   // 1. Trigger spirit pop-out when both hour and minute are present and zodiac changes
   useEffect(() => {
@@ -672,18 +706,7 @@ export default function Home() {
                       >
                         {birthData.hour && birthData.minute && getZodiacByHour(birthData.hour) ? (
                           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex items-center gap-1.5 md:gap-2">
-                            <div className="w-8 h-8 rounded-full border border-accent/20 overflow-hidden bg-black/40 shadow-[0_0_10px_rgba(0,229,255,0.2)]">
-                              <img 
-                                src={`/assets/zodiac/${getZodiacByHour(birthData.hour)?.sprite}.png`} 
-                                alt="Zodiac"
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                  const textNode = document.createTextNode(getZodiacByHour(birthData.hour)?.icon || '');
-                                  (e.target as HTMLImageElement).parentNode?.appendChild(textNode);
-                                }}
-                              />
-                            </div>
+                            <ZodiacIcon hour={birthData.hour} />
                             <span className="hidden sm:inline text-xs md:text-sm font-mystic text-accent shadow-sm">{getZodiacByHour(birthData.hour)?.hanja}</span>
                           </motion.div>
                         ) : (
