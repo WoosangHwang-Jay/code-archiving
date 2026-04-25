@@ -119,7 +119,7 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
     "운명의 카드가 전하는 메시지 수신 중...",
     "인연과 타이밍의 퀀텀 매칭...",
     "영적 주파수 튜닝 중...",
-    "최종 통합 천명 리포트 생성 중..."
+    "천기와 타로의 신비로운 조화 분석 중..."
   ];
 
   const loadingPhrases = mode === 'tarot' ? tarotPhrases : sajuPhrases;
@@ -751,7 +751,7 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-[100px]" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px]" />
 
-              <h2 className="text-3xl md:text-5xl mb-12 md:mb-20 font-mystic text-center decor-accent leading-tight">민화가 들려주는<br/>당신의 통합 천명</h2>
+              <h2 className="text-3xl md:text-5xl mb-12 md:mb-20 font-mystic text-center decor-accent leading-tight">🔮 천기와 타로의<br/>신비로운 조화</h2>
               
               {/* Tarot Cards Selection for the report */}
               <div className="flex flex-col md:flex-row gap-10 justify-center mb-16 md:mb-20 px-4 md:px-10">

@@ -192,14 +192,14 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
                     return `${190 + r * Math.cos(angle)},${190 + r * Math.sin(angle)}`;
                   }).join(' ')} 
                   fill="url(#radarGradient)" 
-                  stroke="#f1e5ac" 
+                  stroke="#2dd4bf" 
                   strokeWidth="2.5" 
                 />
                 
                 <defs>
                   <linearGradient id="radarGradient" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#f1e5ac" stopOpacity="0.8" />
-                    <stop offset="100%" stopColor="#d4af37" stopOpacity="0.4" />
+                    <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.4" />
                   </linearGradient>
                 </defs>
 
