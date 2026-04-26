@@ -9,13 +9,7 @@ interface SajuDashboardProps {
   userName?: string;
 }
 
-const ELEMENT_MAP = {
-  wood: { label: '木 (Wood)', color: 'bg-green-500', text: 'text-green-500', bar: 'from-green-500/20 to-green-500' },
-  fire: { label: '火 (Fire)', color: 'bg-red-500', text: 'text-red-500', bar: 'from-red-500/20 to-red-500' },
-  earth: { label: '土 (Earth)', color: 'bg-yellow-600', text: 'text-yellow-600', bar: 'from-yellow-600/20 to-yellow-600' },
-  metal: { label: '金 (Metal)', color: 'bg-gray-300', text: 'text-gray-300', bar: 'from-gray-300/20 to-gray-300' },
-  water: { label: '水 (Water)', color: 'bg-blue-500', text: 'text-blue-500', bar: 'from-blue-500/20 to-blue-500' },
-};
+
 
 export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '사용자' }) => {
   const { elements, fortuneScores, luckWave } = data;
@@ -33,20 +27,8 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
     { key: 'relations', label: '대인관계' },
   ] as const;
 
-  const getRadarPoints = (scores: typeof fortuneScores, size: number) => {
-    const center = size / 2;
-    const radius = size * 0.4;
-    return radarCategories.map((cat, i) => {
-      const angle = (Math.PI * 2 * i) / radarCategories.length - Math.PI / 2;
-      const score = scores[cat.key] / 100;
-      const x = center + radius * score * Math.cos(angle);
-      const y = center + radius * score * Math.sin(angle);
-      return `${x},${y}`;
-    }).join(' ');
-  };
-
   // Wave Chart Path
-  const getWavePath = (wave: typeof luckWave, width: number, height: number) => {
+  const getWavePath = (wave: { value: number }[], width: number, height: number) => {
     const padding = 20;
     const innerWidth = width - padding * 2;
     const innerHeight = height - padding * 2;
@@ -205,12 +187,12 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
             <p className="text-base md:text-lg font-mystic text-accent/70 leading-relaxed text-center">
               <span className="text-accent font-bold">기운의 조화 :</span>{' '}
               {Object.entries(elements)
-                .filter(([_, v]) => v === 0)
-                .map(([k, _]) => k.toUpperCase())
+                .filter(([, v]) => v === 0)
+                .map(([k]) => k.toUpperCase())
                 .join(', ') ? (
                   `${Object.entries(elements)
-                    .filter(([_, v]) => v === 0)
-                    .map(([k, _]) => k.toUpperCase())
+                    .filter(([, v]) => v === 0)
+                    .map(([k]) => k.toUpperCase())
                     .join(', ')} 기운이 부족하나, 다른 기운들이 이를 보완하고 있습니다.`
                 ) : '오행이 고루 분포되어 조화로운 흐름을 보이고 있습니다.'}
             </p>

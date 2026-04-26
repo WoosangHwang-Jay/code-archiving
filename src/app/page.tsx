@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculateSaju } from '@/lib/saju';
+import { calculateSaju, SajuResult } from '@/lib/saju';
 import { getShuffledDeck } from '@/lib/tarot';
-import { exportToPDF } from '@/lib/export';
+import { exportToPDF, ExportData } from '@/lib/export';
 import ReactMarkdown from 'react-markdown';
 import { Navigation } from '@/components/Navigation';
 import { interpretWithGemini } from '@/lib/geminiClient';
@@ -12,16 +12,7 @@ import { SajuDashboard } from '@/components/SajuDashboard';
 
 // Jay Dosa Introduction text is rendered directly in the component.
 
-interface SajuData {
-  palja: string[];
-  elements: {
-    wood: number;
-    fire: number;
-    earth: number;
-    metal: number;
-    water: number;
-  };
-}
+
 
 interface TarotCard {
   id: number;
@@ -292,7 +283,7 @@ const ZodiacIcon = ({ hour }: { hour: string }) => {
         <span className="text-lg animate-pulse">{info.icon}</span>
       )}
       <img 
-        src={`/assets/zodiac/${info.sprite}.png`} 
+        src={`/assets/zodiac/${info.sprite}.jpg`} 
         alt="Zodiac"
         className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setIsLoaded(true)}
@@ -316,7 +307,7 @@ export default function Home() {
     gender: 'male' as 'male' | 'female',
     isLunar: false
   });
-  const [sajuResult, setSajuResult] = useState<SajuData | null>(null);
+  const [sajuResult, setSajuResult] = useState<SajuResult | null>(null);
   const [shuffledDeck, setShuffledDeck] = useState<TarotCard[]>([]);
   const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
   const [sajuReport, setSajuReport] = useState('');
@@ -338,7 +329,7 @@ export default function Home() {
     const sprites = ['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig'];
     sprites.forEach(sprite => {
       const img = new Image();
-      img.src = `/assets/zodiac/${sprite}.png`;
+      img.src = `/assets/zodiac/${sprite}.jpg`;
     });
   }, []);
 
@@ -468,10 +459,10 @@ export default function Home() {
       dateStr += `T${paddedHour}:${paddedMinute}`;
     }
 
-    const sajuData = calculateSaju(new Date(dateStr));
-    setSajuResult(sajuData);
+    const sajuResult = calculateSaju(new Date(dateStr));
+    setSajuResult(sajuResult);
     try {
-      const report = await interpretWithGemini('saju_only', sajuData, undefined, new Date().toLocaleDateString('ko-KR'));
+      const report = await interpretWithGemini('saju_only', sajuResult!, undefined, new Date().toLocaleDateString('ko-KR'));
       setSajuReport(report);
       setStep('saju_report');
     } catch (err: any) {
@@ -519,7 +510,7 @@ export default function Home() {
     if (selectedCards.length < 3) return;
     setLoading(true);
     try {
-      const report = await interpretWithGemini('combined', sajuResult, selectedCards);
+      const report = await interpretWithGemini('combined', sajuResult!, selectedCards);
       setFinalReport(report);
       setStep('final_report');
     } catch (err: any) {
@@ -606,7 +597,7 @@ export default function Home() {
                     
                     <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-accent shadow-[0_0_50px_rgba(241,229,172,0.5)] overflow-hidden bg-[#050810]">
                       <img 
-                        src={`/assets/zodiac/${activePopSpirit}.png`} 
+                        src={`/assets/zodiac/${activePopSpirit}.jpg`} 
                         alt="Spirit" 
                         className="w-full h-full object-cover"
                       />
@@ -769,7 +760,7 @@ export default function Home() {
         {step === 'saju_report' && sajuResult && (
           <motion.section key="saju_report" id="saju-section" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full space-y-12">
             {/* Premium Dashboard Visuals */}
-            <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
+            <SajuDashboard data={sajuResult!} userName={birthData.year ? '당신' : '사용자'} />
 
             {/* Original Palja Display (Kept as secondary detail) */}
             <div className="glass p-5 md:p-10 rounded-[2rem] md:rounded-[3rem] border border-accent/20 bg-[#050810]/50 backdrop-blur-xl no-export">
@@ -787,7 +778,7 @@ export default function Home() {
                     {index % 2 === 1 && ZODIAC_SPRITES[char] ? (
                       <div className="w-16 h-16 mx-auto mb-3 rounded-full border-2 border-accent/30 overflow-hidden bg-black/40 shadow-[0_0_15px_rgba(241,229,172,0.2)] group relative">
                         <img 
-                          src={`/assets/zodiac/${ZODIAC_SPRITES[char]}.png`} 
+                          src={`/assets/zodiac/${ZODIAC_SPRITES[char]}.jpg`} 
                           alt={char}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
@@ -817,9 +808,17 @@ export default function Home() {
                 </button>
                 <button 
                   onClick={async () => {
+                    if (!sajuResult) return;
                     setIsExporting(true);
                     try {
-                      await exportToPDF('saju-section', 'saju-dashboard-report.pdf');
+                      const exportData: ExportData = {
+                        birthDate: `${birthData.year}년 ${birthData.month}월 ${birthData.day}일${birthData.hour ? ` ${birthData.hour}시` : ''}`,
+                        sajuData: sajuResult!,
+                        sajuReport,
+                        tarotCards: [],
+                        finalReport: '',
+                      };
+                      await exportToPDF(exportData, 'saju-report.pdf');
                     } catch (err) {
                       console.error(err);
                       alert('PDF 생성 중 오류가 발생했습니다.');
@@ -1033,9 +1032,17 @@ export default function Home() {
               <div className="mt-20 flex flex-col sm:flex-row gap-6 pt-12 border-t border-white/10 no-export">
                 <button 
                   onClick={async () => {
+                    if (!sajuResult) return;
                     setIsExporting(true);
                     try {
-                      await exportToPDF('report-section', 'minhwa-oracle-report.pdf');
+                      const exportData: ExportData = {
+                        birthDate: `${birthData.year}년 ${birthData.month}월 ${birthData.day}일${birthData.hour ? ` ${birthData.hour}시` : ''}`,
+                        sajuData: sajuResult!,
+                        sajuReport,
+                        tarotCards: selectedCards,
+                        finalReport,
+                      };
+                      await exportToPDF(exportData, 'minhwa-oracle-report.pdf');
                     } catch (err) {
                       console.error(err);
                       alert('PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
@@ -1058,7 +1065,7 @@ export default function Home() {
                  <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-accent/20 to-transparent mb-4" />
                  <p className="text-xs uppercase tracking-[0.4em] font-mystic text-accent/40">Base Fate Profile (Saju)</p>
                </div>
-               <SajuDashboard data={sajuResult as any} userName={birthData.year ? '당신' : '사용자'} />
+               <SajuDashboard data={sajuResult!} userName={birthData.year ? '당신' : '사용자'} />
             </div>
           </motion.section>
         )}

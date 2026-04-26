@@ -1,7 +1,10 @@
+import { SajuResult } from './saju';
+import { TarotCard } from './tarot';
+
 export async function interpretWithGemini(
   mode: 'saju_only' | 'combined',
-  saju_data: any,
-  tarot_cards?: any[],
+  saju_data: SajuResult,
+  tarot_cards?: TarotCard[],
   currentDateStr?: string
 ) {
   const response = await fetch('/api/interpret', {
