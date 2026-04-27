@@ -101,24 +101,26 @@ export async function POST(req: Request) {
         try {
           console.log(`Attempting interpretation with model: ${modelName} (${apiVersion}, Attempt ${attempts + 1})`);
           // 60초 타임아웃 설정 (복잡한 해석을 위해 시간 연장) 및 콘텐츠 생성
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           result = await model.generateContent(prompt, { timeout: 60000 } as any);
           if (result) {
             success = true;
             break;
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           attempts++;
           lastError = err;
-          console.warn(`Gemini API [${modelName}] Attempt ${attempts} failed:`, err.message);
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          console.warn(`Gemini API [${modelName}] Attempt ${attempts} failed:`, errorMessage);
           
           // 404 에러(모델 없음) 발생 시 즉시 다음 모델로 전환
-          const isNotFound = err.message?.includes('404') || err.message?.includes('not found');
+          const isNotFound = errorMessage?.includes('404') || errorMessage?.includes('not found');
           if (isNotFound) {
             console.warn(`Model ${modelName} not found (404), skipping immediately.`);
             break; 
           }
 
-          const isRateLimit = err.message?.includes('429') || err.message?.includes('Quota');
+          const isRateLimit = errorMessage?.includes('429') || errorMessage?.includes('Quota');
           if (isRateLimit) {
             console.warn(`Rate limit (429) hit for ${modelName}, switching model immediately.`);
             break; 
@@ -126,7 +128,7 @@ export async function POST(req: Request) {
 
           if (attempts < maxAttemptsPerModel) {
             // 503(Service Unavailable)의 경우 조금 더 긴 대기 시간을 가짐
-            const isServiceBusy = err.message?.includes('503') || err.message?.includes('Service Unavailable');
+            const isServiceBusy = errorMessage?.includes('503') || errorMessage?.includes('Service Unavailable');
             const waitTime = isServiceBusy ? (attempts * 2000) : (attempts * 1000);
             await new Promise(res => setTimeout(res, waitTime));
           }
@@ -144,12 +146,13 @@ export async function POST(req: Request) {
 
     const text = result.response.text();
     return NextResponse.json({ result: text });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Gemini API Final Error:', error);
     
+    const errorMessage = error instanceof Error ? error.message : String(error);
     // 에러 유형별 사용자 안내 메시지 최적화
-    const isRateLimit = error.message?.includes('429') || error.message?.includes('Quota');
-    const isServiceUnavailable = error.message?.includes('503') || error.message?.includes('Service Unavailable');
+    const isRateLimit = errorMessage?.includes('429') || errorMessage?.includes('Quota');
+    const isServiceUnavailable = errorMessage?.includes('503') || errorMessage?.includes('Service Unavailable');
     
     let displayMessage = '사주 해석 중 일시적인 오류가 발생했습니다. 다시 시도해 주세요.';
     if (isRateLimit) {
@@ -157,7 +160,7 @@ export async function POST(req: Request) {
     } else if (isServiceUnavailable) {
       displayMessage = '현재 접속자가 많아 서비스가 지연되고 있습니다. 1~2분 후 다시 시도해 주세요.';
     } else {
-      displayMessage = error.message || displayMessage;
+      displayMessage = errorMessage || displayMessage;
     }
       
     return NextResponse.json({ error: displayMessage }, { status: 500 });

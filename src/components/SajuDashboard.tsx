@@ -215,6 +215,7 @@ export const SajuDashboard: React.FC<SajuDashboardProps> = ({ data, userName = '
               className="absolute inset-0 flex items-center justify-center opacity-40 no-export"
             >
               <div className="relative w-full h-full max-w-[450px] max-h-[450px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img id="saju-bagua-image" src="/assets/saju-bagua.png" alt="Bagua" className="w-full h-full object-contain animate-[spin_80s_linear_infinite]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050810] via-transparent to-transparent" />
               </div>

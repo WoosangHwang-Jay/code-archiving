@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateSaju, SajuResult } from '@/lib/saju';
 import { getShuffledDeck } from '@/lib/tarot';
@@ -21,14 +21,6 @@ interface TarotCard {
 }
 
 type Step = 'input' | 'saju_report' | 'tarot_picking' | 'tarot_revealing' | 'final_report';
-
-const ELEMENT_COLORS: Record<string, string> = {
-  wood: 'bg-green-600',
-  fire: 'bg-red-600',
-  earth: 'bg-yellow-700',
-  metal: 'bg-gray-400',
-  water: 'bg-blue-700'
-};
 
 // Custom component for the Hanji unfolding effect
 function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = false }: { 
@@ -65,6 +57,7 @@ function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = fals
       {/* Back of the card (Faceup/Minhwa Image) */}
       <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-accent/40 overflow-hidden rotate-y-180 bg-white">
          {card && (
+           // eslint-disable-next-line @next/next/no-img-element
            <img 
              src={`/assets/tarot/card_${card.id}.png`} 
              alt={card.name}
@@ -282,6 +275,7 @@ const ZodiacIcon = ({ hour }: { hour: string }) => {
       {!isLoaded && (
         <span className="text-lg animate-pulse">{info.icon}</span>
       )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img 
         src={`/assets/zodiac/${info.sprite}.jpg`} 
         alt="Zodiac"
@@ -308,7 +302,7 @@ export default function Home() {
     isLunar: false
   });
   const [sajuResult, setSajuResult] = useState<SajuResult | null>(null);
-  const [shuffledDeck, setShuffledDeck] = useState<TarotCard[]>([]);
+
   const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
   const [sajuReport, setSajuReport] = useState('');
   const [finalReport, setFinalReport] = useState('');
@@ -318,6 +312,12 @@ export default function Home() {
   const [revealingIndex, setRevealingIndex] = useState(0);
   const [shuffleStatus, setShuffleStatus] = useState<'idle' | 'shuffling' | 'dealt'>('idle');
   const [dealtCards, setDealtCards] = useState<TarotCard[]>([]);
+  const [dosaImageIndex, setDosaImageIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+     
+    setDosaImageIndex(Math.floor(Math.random() * 10) + 1);
+  }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [prevZodiac, setPrevZodiac] = useState<string | null>(null);
 
@@ -341,7 +341,9 @@ export default function Home() {
     if (h !== '' && m !== '') {
       const zodiac = getZodiacByHour(h);
       if (zodiac && zodiac.sprite !== prevZodiac) {
+         
         setPrevZodiac(zodiac.sprite);
+         
         setActivePopSpirit(zodiac.sprite);
       }
     } else {
@@ -364,6 +366,7 @@ export default function Home() {
         getFinalInterpretation();
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, revealingIndex]);
 
   // 2. Automatically hide the spirit after a delay
@@ -434,10 +437,11 @@ export default function Home() {
   const handleSajuStart = async () => {
     const newErrors: Record<string, string> = {};
     ['year', 'month', 'day'].forEach(key => {
-      const val = (birthData as any)[key];
-      const err = validateField(key, val);
-      if (err) newErrors[key] = err;
-      if (!val) newErrors[key] = "필수 입력";
+      const k = key as 'year' | 'month' | 'day';
+      const val = birthData[k];
+      const err = validateField(k, val);
+      if (err) newErrors[k] = err;
+      if (!val) newErrors[k] = "필수 입력";
     });
 
     if (Object.values(newErrors).some(err => err)) {
@@ -465,12 +469,13 @@ export default function Home() {
       const report = await interpretWithGemini('saju_only', sajuResult!, undefined, new Date().toLocaleDateString('ko-KR'));
       setSajuReport(report);
       setStep('saju_report');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err.message === 'API_KEY_MISSING') {
+      const error = err instanceof Error ? err : new Error(String(err));
+      if (error.message === 'API_KEY_MISSING') {
         alert('서버 측 .env.local 파일에 GEMINI_API_KEY가 등록되어 있지 않습니다. 관리자에게 문의하세요.');
       } else {
-        alert('사주 해석 실패: ' + (err.message || '알 수 없는 오류'));
+        alert('사주 해석 실패: ' + (error.message || '알 수 없는 오류'));
       }
     } finally {
       setLoading(false);
@@ -506,24 +511,25 @@ export default function Home() {
     setStep('tarot_revealing');
   };
 
-  const getFinalInterpretation = async () => {
+  const getFinalInterpretation = useCallback(async () => {
     if (selectedCards.length < 3) return;
     setLoading(true);
     try {
       const report = await interpretWithGemini('combined', sajuResult!, selectedCards);
       setFinalReport(report);
       setStep('final_report');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err.message === 'API_KEY_MISSING') {
+      const error = err instanceof Error ? err : new Error(String(err));
+      if (error.message === 'API_KEY_MISSING') {
         alert('우측 상단의 설정 버튼(톱니바퀴)을 눌러 Gemini API 키를 먼저 입력해주세요.');
       } else {
-        alert('최종 해석 실패: ' + (err.message || '알 수 없는 오류'));
+        alert('최종 해석 실패: ' + (error.message || '알 수 없는 오류'));
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCards, sajuResult]);
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-12 flex flex-col items-center min-h-screen">
@@ -562,14 +568,16 @@ export default function Home() {
             {/* Jay Dosa Character Image */}
             <div className="mb-8 relative flex justify-center group w-full mt-2">
                <div className="absolute inset-0 bg-neon/30 blur-[60px] rounded-full scale-[0.8] animate-pulse" />
-               <motion.img 
-                 src="/assets/jay-dosa.png" 
-                 alt="Jay Dosa" 
-                 className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-neon/50 shadow-[0_0_40px_rgba(0,229,255,0.7)] relative z-10"
-                 initial={{ y: 20, opacity: 0 }}
-                 animate={{ y: 0, opacity: 1 }}
-                 transition={{ delay: 0.2 }}
-               />
+               {dosaImageIndex && (
+                 <motion.img 
+                   src={`/assets/dosas/dosa_${dosaImageIndex.toString().padStart(2, '0')}.jpg`} 
+                   alt="Jay Dosa" 
+                   className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-neon/50 shadow-[0_0_40px_rgba(0,229,255,0.7)] relative z-10 object-cover"
+                   initial={{ y: 20, opacity: 0 }}
+                   animate={{ y: 0, opacity: 1 }}
+                   transition={{ delay: 0.2 }}
+                 />
+               )}
             </div>
 
             {/* Spirit Pop-out Overlay */}
@@ -596,6 +604,7 @@ export default function Home() {
                     <div className="absolute inset-0 border-2 border-accent/30 rounded-full animate-ping scale-110" />
                     
                     <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-accent shadow-[0_0_50px_rgba(241,229,172,0.5)] overflow-hidden bg-[#050810]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img 
                         src={`/assets/zodiac/${activePopSpirit}.jpg`} 
                         alt="Spirit" 
@@ -777,6 +786,7 @@ export default function Home() {
                   }`}>
                     {index % 2 === 1 && ZODIAC_SPRITES[char] ? (
                       <div className="w-16 h-16 mx-auto mb-3 rounded-full border-2 border-accent/30 overflow-hidden bg-black/40 shadow-[0_0_15px_rgba(241,229,172,0.2)] group relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img 
                           src={`/assets/zodiac/${ZODIAC_SPRITES[char]}.jpg`} 
                           alt={char}
@@ -882,19 +892,22 @@ export default function Home() {
                     className="flex items-center justify-center"
                   >
                     <div className="relative w-60 h-60">
-                      {[...Array(12)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          animate={{ 
-                            x: [0, (Math.random() - 0.5) * 300, 0],
-                            y: [0, (Math.random() - 0.5) * 300, 0],
-                            rotate: [0, Math.random() * 360, 0],
-                            opacity: [0.5, 1, 0.5]
-                          }}
-                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                          className="absolute top-1/2 left-1/2 -mt-20 -ml-12 w-24 h-40 rounded-lg border border-accent/30 bg-[#1a1630] shadow-xl"
-                        />
-                      ))}
+                      {[...Array(12)].map((_, i) => {
+                         
+                        return (
+                          <motion.div
+                            key={i}
+                            animate={{ 
+                              x: [0, (Math.random() - 0.5) * 300, 0],
+                              y: [0, (Math.random() - 0.5) * 300, 0],
+                              rotate: [0, Math.random() * 360, 0],
+                              opacity: [0.5, 1, 0.5]
+                            }}
+                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                            className="absolute top-1/2 left-1/2 -mt-20 -ml-12 w-24 h-40 rounded-lg border border-accent/30 bg-[#1a1630] shadow-xl"
+                          />
+                        );
+                      })}
                       <div className="absolute inset-0 flex items-center justify-center">
                          <p className="font-mystic text-accent text-2xl animate-pulse">천기를 섞는 중...</p>
                       </div>
@@ -1073,7 +1086,13 @@ export default function Home() {
 
       <footer className="mt-20 py-12 border-t border-white/5 w-full text-center">
         <p className="text-[10px] opacity-20 tracking-[0.5em] uppercase mb-4 italic">Tradition Meets Future • Stateless Minhwa Oracle</p>
-        <div className="text-accent/20 text-2xl">✦ ✧ ✺ ✧ ✦</div>
+        <div className="text-accent/20 text-2xl mb-6">✦ ✧ ✺ ✧ ✦</div>
+        <p className="text-xs text-accent/40 font-mystic tracking-widest uppercase">
+          © {new Date().getFullYear()} JAY DOSA. All rights reserved.
+        </p>
+        <p className="text-[10px] opacity-40 mt-2 font-sans tracking-widest text-accent/50 hover:text-accent transition-colors">
+          <a href="mailto:roblove60@naver.com">Contact: roblove60@naver.com</a>
+        </p>
       </footer>
 
       {/* Tailwind helper for 3D transforms */}

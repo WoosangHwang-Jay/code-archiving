@@ -128,7 +128,8 @@ class ReportBuilder {
   }
 
   // style param kept for API compat but always uses 'normal' for custom fonts
-  setKoreanFont(size: number, _style: 'normal' | 'bold' = 'normal') {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  setKoreanFont(size: number, style: 'normal' | 'bold' = 'normal') {
     this.pdf.setFontSize(size);
     this.pdf.setFont(this.koreanFont, 'normal');
   }
