@@ -23,12 +23,12 @@ interface TarotCard {
 type Step = 'input' | 'saju_report' | 'tarot_picking' | 'tarot_revealing' | 'final_report';
 
 // Custom component for the Hanji unfolding effect
-function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = false }: { 
-  card?: TarotCard, 
-  index: number, 
-  isFlipped?: boolean, 
+function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = false }: {
+  card?: TarotCard,
+  index: number,
+  isFlipped?: boolean,
   onClick?: () => void,
-  isSelected?: boolean 
+  isSelected?: boolean
 }) {
   return (
     <motion.div
@@ -40,39 +40,38 @@ function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = fals
       transition={{ duration: 0.7, type: 'spring', stiffness: 260, damping: 20 }}
     >
       {/* Front of the card (Facedown/Hanji Back) */}
-      <div className={`absolute inset-0 backface-hidden rounded-xl border-2 transition-all duration-500 overflow-hidden ${
-        isSelected ? 'border-accent shadow-[0_0_25px_rgba(212,175,55,0.6)]' : 'border-white/10 bg-[#1a1630]'
-      }`}>
+      <div className={`absolute inset-0 backface-hidden rounded-xl border-2 transition-all duration-500 overflow-hidden ${isSelected ? 'border-accent shadow-[0_0_25px_rgba(212,175,55,0.6)]' : 'border-white/10 bg-[#1a1630]'
+        }`}>
         <div className="absolute inset-4 border border-accent/20 rounded-lg flex flex-col items-center justify-center">
           <div className="text-2xl text-accent/30 mb-2">✨</div>
           <div className="text-[8px] uppercase tracking-[0.3em] text-accent/20 font-bold">Mystic Oracle</div>
         </div>
         {isSelected && (
           <div className="absolute inset-0 bg-accent/20 flex items-center justify-center">
-             <div className="text-background font-black text-2xl">{index + 1}</div>
+            <div className="text-background font-black text-2xl">{index + 1}</div>
           </div>
         )}
       </div>
 
       {/* Back of the card (Faceup/Minhwa Image) */}
       <div className="absolute inset-0 backface-hidden rounded-xl border-2 border-accent/40 overflow-hidden rotate-y-180 bg-white">
-         {card && (
-           // eslint-disable-next-line @next/next/no-img-element
-           <img 
-             src={`/assets/tarot/card_${card.id}.png`} 
-             alt={card.name}
-             className="w-full h-full object-cover"
-             onError={(e) => {
-               (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x600?text=Minhwa+Tarot';
-             }}
-           />
-         )}
-         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-         {card && (
-           <div className="absolute bottom-2 left-0 right-0 text-center">
-             <div className="text-[10px] font-mystic text-accent drop-shadow-md">{card.name}</div>
-           </div>
-         )}
+        {card && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/assets/tarot/card_${card.id}.png`}
+            alt={card.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x600?text=Minhwa+Tarot';
+            }}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {card && (
+          <div className="absolute bottom-2 left-0 right-0 text-center">
+            <div className="text-[10px] font-mystic text-accent drop-shadow-md">{card.name}</div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -107,7 +106,7 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
   ];
 
   const loadingPhrases = mode === 'tarot' ? tarotPhrases : sajuPhrases;
-  
+
   const sajuElements = [
     { char: '木', label: 'Wood' },
     { char: '火', label: 'Fire' },
@@ -125,7 +124,7 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
   ];
 
   const elements = mode === 'tarot' ? tarotElements : sajuElements;
-  
+
   const [phraseIdx, setPhraseIdx] = useState(0);
   const [activeElementIdx, setActiveElementIdx] = useState(0);
 
@@ -133,11 +132,11 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
     const phraseInterval = setInterval(() => {
       setPhraseIdx((prev) => (prev + 1) % loadingPhrases.length);
     }, 2000);
-    
+
     const elementInterval = setInterval(() => {
       setActiveElementIdx((prev) => (prev + 1) % elements.length);
     }, 600);
-    
+
     return () => {
       clearInterval(phraseInterval);
       clearInterval(elementInterval);
@@ -145,7 +144,7 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
   }, [loadingPhrases.length, elements.length]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -154,13 +153,13 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
       <div className="relative flex flex-col items-center">
         {/* Background Aura */}
         <div className="absolute inset-0 bg-accent/5 blur-[120px] rounded-full scale-150" />
-        
+
         {/* Five Elements Sequential Animation */}
         <div className="flex gap-6 md:gap-10 mb-16 relative z-10">
           {elements.map((el, i) => (
             <div key={el.char} className="flex flex-col items-center">
               <motion.span
-                animate={{ 
+                animate={{
                   color: i === activeElementIdx ? "#f1e5ac" : "rgba(241, 229, 172, 0.15)",
                   scale: i === activeElementIdx ? 1.4 : 1,
                   textShadow: i === activeElementIdx ? "0 0 25px rgba(241, 229, 172, 0.6)" : "none"
@@ -170,7 +169,7 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
               >
                 {el.char}
               </motion.span>
-              <motion.span 
+              <motion.span
                 animate={{ opacity: i === activeElementIdx ? 0.4 : 0 }}
                 className="text-[8px] uppercase tracking-widest mt-2 text-accent font-bold"
               >
@@ -185,16 +184,16 @@ function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?
 
         <div className="text-center relative z-10">
           <AnimatePresence mode="wait">
-            <motion.p 
+            <motion.p
               key={phraseIdx}
               initial={{ opacity: 0, y: 10, color: "#e0d7ff" }}
-              animate={{ 
-                opacity: 1, 
-                y: 0, 
-                color: ["#e0d7ff", "#f1e5ac", "#e0d7ff"] 
+              animate={{
+                opacity: 1,
+                y: 0,
+                color: ["#e0d7ff", "#f1e5ac", "#e0d7ff"]
               }}
               exit={{ opacity: 0, y: -10 }}
-              transition={{ 
+              transition={{
                 color: { duration: 2, repeat: Infinity },
                 opacity: { duration: 0.5 },
                 y: { duration: 0.5 }
@@ -225,7 +224,7 @@ const getZodiacByHour = (hourStr: string) => {
   if (!hourStr) return null;
   const h = parseInt(hourStr, 10);
   if (isNaN(h)) return null;
-  
+
   if (h >= 23 || h < 1) return { icon: '🐀', hanja: '子(자)', sprite: 'rat' };
   if (h >= 1 && h < 3) return { icon: '🐂', hanja: '丑(축)', sprite: 'ox' };
   if (h >= 3 && h < 5) return { icon: '🐅', hanja: '寅(인)', sprite: 'tiger' };
@@ -276,8 +275,8 @@ const ZodiacIcon = ({ hour }: { hour: string }) => {
         <span className="text-lg animate-pulse">{info.icon}</span>
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img 
-        src={`/assets/zodiac/${info.sprite}.jpg`} 
+      <img
+        src={`/assets/zodiac/${info.sprite}.jpg`}
         alt="Zodiac"
         className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         onLoad={() => setIsLoaded(true)}
@@ -289,14 +288,56 @@ const ZodiacIcon = ({ hour }: { hour: string }) => {
   );
 };
 
+// Web Audio API Sound Utilities
+const playZodiacSound = () => {
+  if (typeof window === 'undefined') return;
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(880, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.5);
+  
+  gain.gain.setValueAtTime(0, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  osc.start();
+  osc.stop(ctx.currentTime + 0.8);
+};
+
+const playTarotSound = () => {
+  if (typeof window === 'undefined') return;
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(220, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.2);
+  
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+  
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  
+  osc.start();
+  osc.stop(ctx.currentTime + 0.3);
+};
+
 export default function Home() {
 
   const [step, setStep] = useState<Step>('input');
-  const [birthData, setBirthData] = useState({ 
-    year: '', 
-    month: '', 
-    day: '', 
-    hour: '', 
+  const [birthData, setBirthData] = useState({
+    year: '',
+    month: '',
+    day: '',
+    hour: '',
     minute: '',
     gender: 'male' as 'male' | 'female',
     isLunar: false
@@ -315,7 +356,7 @@ export default function Home() {
   const [dosaImageIndex, setDosaImageIndex] = useState<number | null>(null);
 
   useEffect(() => {
-     
+
     setDosaImageIndex(Math.floor(Math.random() * 10) + 1);
   }, []);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -337,13 +378,12 @@ export default function Home() {
   useEffect(() => {
     const h = birthData.hour?.trim() || '';
     const m = birthData.minute?.trim() || '';
-    
+
     if (h !== '' && m !== '') {
       const zodiac = getZodiacByHour(h);
       if (zodiac && zodiac.sprite !== prevZodiac) {
-         
+        playZodiacSound();
         setPrevZodiac(zodiac.sprite);
-         
         setActivePopSpirit(zodiac.sprite);
       }
     } else {
@@ -352,12 +392,13 @@ export default function Home() {
       setActivePopSpirit(null);
     }
   }, [birthData.hour, birthData.minute, prevZodiac]);
-  
+
   // 3. Card Revelation Sequence Logic
   useEffect(() => {
     if (step === 'tarot_revealing') {
       if (revealingIndex < 3) {
         const timer = setTimeout(() => {
+          playTarotSound();
           setRevealingIndex(prev => prev + 1);
         }, 2000); // 1s for flip animation + 1s for stay = 2s total cycle
         return () => clearTimeout(timer);
@@ -451,12 +492,12 @@ export default function Home() {
     }
 
     setLoading(true);
-    
+
     const { year, month, day, hour, minute } = birthData;
     const paddedMonth = month.padStart(2, '0');
     const paddedDay = day.padStart(2, '0');
     let dateStr = `${year}-${paddedMonth}-${paddedDay}`;
-    
+
     if (hour && minute) {
       const paddedHour = hour.padStart(2, '0');
       const paddedMinute = minute.padStart(2, '0');
@@ -502,6 +543,7 @@ export default function Home() {
   const handlePickCard = (card: TarotCard) => {
     if (selectedCards.length >= 3) return;
     if (selectedCards.find(c => c.id === card.id)) return;
+    playTarotSound();
     setSelectedCards([...selectedCards, card]);
   };
 
@@ -536,15 +578,15 @@ export default function Home() {
       <Navigation />
       <AnimatePresence>
         {loading && (
-          <DosaLoadingOverlay 
-            message={['tarot_picking', 'tarot_revealing', 'final_report'].includes(step) ? "운명의 실타래를 엮고 있습니다..." : "천기를 읽는 중입니다..."} 
-            mode={['tarot_picking', 'tarot_revealing', 'final_report'].includes(step) ? 'tarot' : 'saju'} 
+          <DosaLoadingOverlay
+            message={['tarot_picking', 'tarot_revealing', 'final_report'].includes(step) ? "운명의 실타래를 엮고 있습니다..." : "천기를 읽는 중입니다..."}
+            mode={['tarot_picking', 'tarot_revealing', 'final_report'].includes(step) ? 'tarot' : 'saju'}
           />
         )}
       </AnimatePresence>
 
       <header className="text-center mb-16">
-        <motion.h1 
+        <motion.h1
           className="text-5xl md:text-7xl font-light mb-4 tracking-[0.1em] text-accent font-cinzel drop-shadow-[0_0_15px_rgba(241,229,172,0.4)]"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -558,7 +600,7 @@ export default function Home() {
 
       <AnimatePresence mode="wait">
         {step === 'input' && (
-          <motion.section 
+          <motion.section
             key="input"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -567,31 +609,31 @@ export default function Home() {
           >
             {/* Jay Dosa Character Image */}
             <div className="mb-8 relative flex justify-center group w-full mt-2">
-               <div className="absolute inset-0 bg-neon/30 blur-[60px] rounded-full scale-[0.8] animate-pulse" />
-               {dosaImageIndex && (
-                 <motion.img 
-                   src={`/assets/dosas/dosa_${dosaImageIndex.toString().padStart(2, '0')}.jpg`} 
-                   alt="Jay Dosa" 
-                   className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-neon/50 shadow-[0_0_40px_rgba(0,229,255,0.7)] relative z-10 object-cover"
-                   initial={{ y: 20, opacity: 0 }}
-                   animate={{ y: 0, opacity: 1 }}
-                   transition={{ delay: 0.2 }}
-                 />
-               )}
+              <div className="absolute inset-0 bg-neon/30 blur-[60px] rounded-full scale-[0.8] animate-pulse" />
+              {dosaImageIndex && (
+                <motion.img
+                  src={`/assets/dosas/dosa_${dosaImageIndex.toString().padStart(2, '0')}.jpg`}
+                  alt="Jay Dosa"
+                  className="w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-neon/50 shadow-[0_0_40px_rgba(0,229,255,0.7)] relative z-10 object-cover"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                />
+              )}
             </div>
 
             {/* Spirit Pop-out Overlay */}
             <AnimatePresence mode="wait">
               {activePopSpirit && (
-                <motion.div 
+                <motion.div
                   key={activePopSpirit}
                   initial={{ opacity: 0, scale: 0.2, y: 100, filter: 'blur(20px)' }}
                   animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
-                  exit={{ 
-                    opacity: 0, 
-                    scale: 0, 
-                    x: 180, 
-                    y: 120, 
+                  exit={{
+                    opacity: 0,
+                    scale: 0,
+                    x: 180,
+                    y: 120,
                     filter: 'blur(15px)',
                     transition: { duration: 0.5, ease: "anticipate" }
                   }}
@@ -602,16 +644,16 @@ export default function Home() {
                     {/* Mystical Glow Background */}
                     <div className="absolute inset-0 bg-accent/20 blur-[100px] rounded-full scale-150 animate-pulse" />
                     <div className="absolute inset-0 border-2 border-accent/30 rounded-full animate-ping scale-110" />
-                    
+
                     <div className="relative w-64 h-64 md:w-80 md:h-80 rounded-full border-4 border-accent shadow-[0_0_50px_rgba(241,229,172,0.5)] overflow-hidden bg-[#050810]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img 
-                        src={`/assets/zodiac/${activePopSpirit}.jpg`} 
-                        alt="Spirit" 
+                      <img
+                        src={`/assets/zodiac/${activePopSpirit}.jpg`}
+                        alt="Spirit"
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-accent text-background px-6 py-1 rounded-full font-mystic text-xl font-bold shadow-lg"
@@ -643,7 +685,7 @@ export default function Home() {
                 <label className="block text-sm md:text-base uppercase tracking-[0.3em] mb-10 opacity-80 text-center font-bold flex items-center justify-center gap-3 font-mystic text-accent/80">
                   당신의 천기(天氣) 입력
                 </label>
-                
+
                 <div className="flex flex-col gap-6">
                   {/* Date Form Row */}
                   <div className="w-full flex flex-col gap-2 relative">
@@ -661,8 +703,8 @@ export default function Home() {
                           className="w-[60px] sm:w-[90px] md:w-[110px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-[0.1em] placeholder:text-accent/30 text-accent"
                           value={birthData.day} onChange={handleInputChange} onBlur={handleBlur} />
                       </div>
-                      
-                      <div 
+
+                      <div
                         className="pl-4 text-accent/50 opacity-60 hover:opacity-100 hover:text-accent group-focus-within:opacity-100 transition-all cursor-pointer"
                         onClick={() => dateInputRef.current?.showPicker()}
                       >
@@ -672,11 +714,11 @@ export default function Home() {
                           <line x1="8" y1="2" x2="8" y2="6"></line>
                           <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
-                        <input 
-                          type="date" 
-                          ref={dateInputRef} 
-                          className="absolute invisible w-0 h-0" 
-                          onChange={handleDateChange} 
+                        <input
+                          type="date"
+                          ref={dateInputRef}
+                          className="absolute invisible w-0 h-0"
+                          onChange={handleDateChange}
                         />
                       </div>
                     </InputBox>
@@ -699,8 +741,8 @@ export default function Home() {
                           className="w-[70px] sm:w-[100px] md:w-[120px] bg-transparent text-center text-lg sm:text-xl md:text-2xl font-mystic font-light outline-none tracking-tight sm:tracking-widest placeholder:text-accent/30 text-accent"
                           value={birthData.minute} onChange={handleInputChange} onBlur={handleBlur} />
                       </div>
-                      
-                      <div 
+
+                      <div
                         className="pl-4 ml-2 border-l border-accent/20 min-w-[40px] flex items-center justify-center cursor-pointer group/icon"
                         onClick={() => timeInputRef.current?.showPicker()}
                       >
@@ -717,11 +759,11 @@ export default function Home() {
                             </svg>
                           </div>
                         )}
-                        <input 
-                          type="time" 
-                          ref={timeInputRef} 
-                          className="absolute invisible w-0 h-0" 
-                          onChange={handleTimeChange} 
+                        <input
+                          type="time"
+                          ref={timeInputRef}
+                          className="absolute invisible w-0 h-0"
+                          onChange={handleTimeChange}
                         />
                       </div>
                     </InputBox>
@@ -732,13 +774,13 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-6 md:gap-10">
                   <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-inner">
                     <button onClick={() => setBirthData({ ...birthData, gender: 'male' })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${birthData.gender === 'male' ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>MALE (남)</button>
                     <button onClick={() => setBirthData({ ...birthData, gender: 'female' })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${birthData.gender === 'female' ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>FEMALE (여)</button>
                   </div>
-                  
+
                   <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-inner">
                     <button onClick={() => setBirthData({ ...birthData, isLunar: false })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${!birthData.isLunar ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>SOLAR (양)</button>
                     <button onClick={() => setBirthData({ ...birthData, isLunar: true })} className={`px-8 py-2.5 rounded-xl text-sm font-mystic transition-all ${birthData.isLunar ? 'bg-accent text-background font-bold shadow-lg' : 'text-accent/40 hover:text-accent/60'}`}>LUNAR (음)</button>
@@ -746,22 +788,38 @@ export default function Home() {
                 </div>
               </div>
 
-              <motion.button 
-                onClick={handleSajuStart} 
-                disabled={loading} 
+              <motion.button
+                onClick={handleSajuStart}
+                disabled={loading}
                 whileHover={{ scale: 1.02, boxShadow: "0 0 50px rgba(0, 229, 255, 0.6)" }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full max-w-xl bg-neon text-white font-myeongjo font-extrabold tracking-[0.15em] py-5 md:py-6 rounded-full drop-shadow-[0_4px_15px_rgba(0,229,255,0.3)] transition-all text-xl md:text-2xl mt-12 mb-8 mx-auto relative overflow-hidden group"
               >
                 <span className="relative z-10">{loading ? '천기를 읽는 중...' : '나의 천명 읽기'}</span>
-                
-                <motion.div 
+
+                <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-45 -translate-x-[200%] group-hover:animate-[shine_1.5s_infinite]"
                   initial={false}
                 />
-                
+
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-active:opacity-100 transition-opacity duration-300 scale-0 group-active:scale-150 rounded-full" />
               </motion.button>
+              
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                className="text-[10px] md:text-xs text-accent/80 font-mystic tracking-wider text-center"
+              >
+                * 입력하신 생년일시 정보는 저장되지 않으며, 분석 완료 후 즉시 삭제됩니다.
+              </motion.p>
+              
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.3 }}
+                className="text-[8px] text-accent/50 font-mystic tracking-[0.2em] text-center mt-2"
+              >
+                v1.0
+              </motion.p>
             </div>
           </motion.section>
         )}
@@ -778,29 +836,28 @@ export default function Home() {
                 천간지지 팔자(八字) 상세
                 <span className="h-[1px] w-8 bg-accent/20" />
               </h2>
-              
+
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-16 px-4">
                 {sajuResult.palja.map((char, index) => (
-                  <div key={index} className={`p-4 rounded-xl text-center border shadow-lg transition-all ${
-                    index % 2 === 1 ? 'bg-accent/5 border-accent/20' : 'bg-white/5 border-white/10'
-                  }`}>
+                  <div key={index} className={`p-4 rounded-xl text-center border shadow-lg transition-all ${index % 2 === 1 ? 'bg-accent/5 border-accent/20' : 'bg-white/5 border-white/10'
+                    }`}>
                     {index % 2 === 1 && ZODIAC_SPRITES[char] ? (
                       <div className="w-16 h-16 mx-auto mb-3 rounded-full border-2 border-accent/30 overflow-hidden bg-black/40 shadow-[0_0_15px_rgba(241,229,172,0.2)] group relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={`/assets/zodiac/${ZODIAC_SPRITES[char]}.jpg`} 
+                        <img
+                          src={`/assets/zodiac/${ZODIAC_SPRITES[char]}.jpg`}
                           alt={char}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                           <span className="text-xl font-mystic text-accent font-bold">{char}</span>
+                          <span className="text-xl font-mystic text-accent font-bold">{char}</span>
                         </div>
                       </div>
                     ) : (
                       <div className="text-3xl font-mystic text-accent mb-2">{char}</div>
                     )}
                     <div className="text-[8px] opacity-30 uppercase tracking-tighter">
-                      {['Year', 'Month', 'Day', 'Hour'][Math.floor(index/2)]} {index % 2 === 0 ? 'Top' : 'Bottom'}
+                      {['Year', 'Month', 'Day', 'Hour'][Math.floor(index / 2)]} {index % 2 === 0 ? 'Top' : 'Bottom'}
                     </div>
                   </div>
                 ))}
@@ -809,52 +866,52 @@ export default function Home() {
 
             {/* Enhanced Text Interpretation Rendering */}
             <div className="prose prose-invert max-w-none bg-black/40 p-5 md:p-10 rounded-[1.5rem] md:rounded-[3rem] border border-white/5 shadow-inner leading-[1.8] md:leading-[2.2] text-blue-50/90 report-content font-myeongjo text-base md:text-lg">
-                <ReactMarkdown>{sajuReport}</ReactMarkdown>
-              </div>
+              <ReactMarkdown>{sajuReport}</ReactMarkdown>
+            </div>
 
-              <div className="mt-12 flex flex-col sm:flex-row gap-4 no-export">
-                <button onClick={handleGoToTarot} className="flex-[2] bg-accent text-background font-black py-5 rounded-2xl hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all flex items-center justify-center gap-2">
-                  🃏 민화 타로 카드로 더 깊은 조언 얻기
-                </button>
-                <button 
-                  onClick={async () => {
-                    if (!sajuResult) return;
-                    setIsExporting(true);
-                    try {
-                      const exportData: ExportData = {
-                        birthDate: `${birthData.year}년 ${birthData.month}월 ${birthData.day}일${birthData.hour ? ` ${birthData.hour}시` : ''}`,
-                        sajuData: sajuResult!,
-                        sajuReport,
-                        tarotCards: [],
-                        finalReport: '',
-                      };
-                      await exportToPDF(exportData, 'saju-report.pdf');
-                    } catch (err) {
-                      console.error(err);
-                      alert('PDF 생성 중 오류가 발생했습니다.');
-                    } finally {
-                      setIsExporting(false);
-                    }
-                  }}
-                  disabled={isExporting}
-                  className="flex-1 bg-white/10 py-5 rounded-2xl hover:bg-white/20 transition-all font-bold flex items-center justify-center gap-2 border border-white/10"
-                >
-                  💾 {isExporting ? '저장 중...' : 'PDF 저장'}
-                </button>
-                <button onClick={() => setStep('input')} className="flex-1 bg-white/5 py-5 rounded-2xl hover:bg-white/10 transition-all font-bold opacity-60">종료</button>
-              </div>
+            <div className="mt-12 flex flex-col sm:flex-row gap-4 no-export">
+              <button onClick={handleGoToTarot} className="flex-[2] bg-accent text-background font-black py-5 rounded-2xl hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] transition-all flex items-center justify-center gap-2">
+                🃏 민화 타로 카드로 더 깊은 조언 얻기
+              </button>
+              <button
+                onClick={async () => {
+                  if (!sajuResult) return;
+                  setIsExporting(true);
+                  try {
+                    const exportData: ExportData = {
+                      birthDate: `${birthData.year}년 ${birthData.month}월 ${birthData.day}일${birthData.hour ? ` ${birthData.hour}시` : ''}`,
+                      sajuData: sajuResult!,
+                      sajuReport,
+                      tarotCards: [],
+                      finalReport: '',
+                    };
+                    await exportToPDF(exportData, 'saju-report.pdf');
+                  } catch (err) {
+                    console.error(err);
+                    alert('PDF 생성 중 오류가 발생했습니다.');
+                  } finally {
+                    setIsExporting(false);
+                  }
+                }}
+                disabled={isExporting}
+                className="flex-1 bg-white/10 py-5 rounded-2xl hover:bg-white/20 transition-all font-bold flex items-center justify-center gap-2 border border-white/10"
+              >
+                💾 {isExporting ? '저장 중...' : 'PDF 저장'}
+              </button>
+              <button onClick={() => setStep('input')} className="flex-1 bg-white/5 py-5 rounded-2xl hover:bg-white/10 transition-all font-bold opacity-60">종료</button>
+            </div>
           </motion.section>
         )}
 
         {step === 'tarot_picking' && (
           <motion.section key="tarot_pick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full text-center flex flex-col items-center">
             <h2 className="text-4xl mb-6 font-mystic italic tracking-[0.2em] text-accent decor-accent">DIVINE CHOICE</h2>
-            
+
             <div className="relative w-full max-w-4xl min-h-[400px] flex items-center justify-center mb-12">
               <AnimatePresence mode="wait">
                 {/* 1. Idle State: Show the deck */}
                 {shuffleStatus === 'idle' && (
-                  <motion.div 
+                  <motion.div
                     key="idle"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -863,9 +920,9 @@ export default function Home() {
                   >
                     <div className="relative w-40 h-60 mb-12">
                       {[...Array(5)].map((_, i) => (
-                        <div 
-                          key={i} 
-                          className="absolute inset-0 rounded-xl border-2 border-accent/20 bg-[#1a1630] shadow-2xl" 
+                        <div
+                          key={i}
+                          className="absolute inset-0 rounded-xl border-2 border-accent/20 bg-[#1a1630] shadow-2xl"
                           style={{ transform: `translate(${i * 2}px, ${-i * 2}px)`, zIndex: -i }}
                         />
                       ))}
@@ -873,7 +930,7 @@ export default function Home() {
                         <span className="text-accent/30 text-4xl">✨</span>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={handleShuffle}
                       className="px-10 py-4 bg-accent text-background font-black rounded-full hover:shadow-[0_0_30px_rgba(241,229,172,0.5)] transition-all hover:scale-105 active:scale-95"
                     >
@@ -884,7 +941,7 @@ export default function Home() {
 
                 {/* 2. Shuffling State: Dynamic Animation */}
                 {shuffleStatus === 'shuffling' && (
-                  <motion.div 
+                  <motion.div
                     key="shuffling"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -893,11 +950,11 @@ export default function Home() {
                   >
                     <div className="relative w-60 h-60">
                       {[...Array(12)].map((_, i) => {
-                         
+
                         return (
                           <motion.div
                             key={i}
-                            animate={{ 
+                            animate={{
                               x: [0, (Math.random() - 0.5) * 300, 0],
                               y: [0, (Math.random() - 0.5) * 300, 0],
                               rotate: [0, Math.random() * 360, 0],
@@ -909,7 +966,7 @@ export default function Home() {
                         );
                       })}
                       <div className="absolute inset-0 flex items-center justify-center">
-                         <p className="font-mystic text-accent text-2xl animate-pulse">천기를 섞는 중...</p>
+                        <p className="font-mystic text-accent text-2xl animate-pulse">천기를 섞는 중...</p>
                       </div>
                     </div>
                   </motion.div>
@@ -917,7 +974,7 @@ export default function Home() {
 
                 {/* 3. Dealt State: Show 12 cards in a spread */}
                 {shuffleStatus === 'dealt' && (
-                  <motion.div 
+                  <motion.div
                     key="dealt"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -926,12 +983,11 @@ export default function Home() {
                     <p className="opacity-60 mb-12 max-w-lg leading-relaxed">
                       셔플된 카드 중에서 당신의 마음이 머무는 3장을 골라주세요.
                     </p>
-                    
+
                     <div className="flex gap-4 mb-16 h-24 items-center justify-center w-full">
                       {[0, 1, 2].map(i => (
-                        <div key={i} className={`w-14 h-20 rounded-xl border-2 transition-all flex items-center justify-center font-black text-xl ${
-                          selectedCards[i] ? 'bg-accent border-accent text-background shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'border-white/10 bg-white/5 text-white/10'
-                        }`}>
+                        <div key={i} className={`w-14 h-20 rounded-xl border-2 transition-all flex items-center justify-center font-black text-xl ${selectedCards[i] ? 'bg-accent border-accent text-background shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'border-white/10 bg-white/5 text-white/10'
+                          }`}>
                           {selectedCards[i] ? i + 1 : '？'}
                         </div>
                       ))}
@@ -940,10 +996,10 @@ export default function Home() {
                     <div className="flex flex-wrap justify-center gap-4 md:gap-6 p-8 glass rounded-[3rem] border-accent/20 w-full max-w-5xl">
                       {dealtCards.map((card, idx) => (
                         <div key={idx} className="w-[80px] sm:w-[100px] md:w-[120px] transition-all hover:-translate-y-4">
-                          <MinhwaCard 
-                            index={selectedCards.indexOf(card)} 
+                          <MinhwaCard
+                            index={selectedCards.indexOf(card)}
                             isSelected={!!selectedCards.find(c => c.id === card.id)}
-                            onClick={() => handlePickCard(card)} 
+                            onClick={() => handlePickCard(card)}
                           />
                         </div>
                       ))}
@@ -954,9 +1010,9 @@ export default function Home() {
             </div>
 
             {shuffleStatus === 'dealt' && (
-              <button 
-                onClick={startRevelation} 
-                disabled={selectedCards.length < 3 || loading} 
+              <button
+                onClick={startRevelation}
+                disabled={selectedCards.length < 3 || loading}
                 className="px-16 py-6 bg-accent text-background font-black rounded-full disabled:opacity-20 transition-all hover:scale-110 active:scale-95 shadow-[0_20px_40px_rgba(212,175,55,0.3)] text-xl"
               >
                 {loading ? '신령의 계시를 받는 중...' : '🔮 민화 타로의 계시 받기'}
@@ -966,15 +1022,15 @@ export default function Home() {
         )}
 
         {step === 'tarot_revealing' && (
-          <motion.section 
-            key="tarot_revealing" 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.section
+            key="tarot_revealing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-40 flex flex-col items-center justify-center bg-[#050810]/90 backdrop-blur-xl"
           >
             <div className="text-center mb-12">
-              <motion.h2 
+              <motion.h2
                 key={revealingIndex}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1016,8 +1072,8 @@ export default function Home() {
               <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 blur-[100px]" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 blur-[100px]" />
 
-              <h2 className="text-3xl md:text-5xl mb-12 md:mb-20 font-mystic text-center decor-accent leading-tight">🔮 민화 타로의<br/>신비로운 계시</h2>
-              
+              <h2 className="text-3xl md:text-5xl mb-12 md:mb-20 font-mystic text-center decor-accent leading-tight">🔮 민화 타로의<br />신비로운 계시</h2>
+
               {/* Tarot Cards Selection for the report */}
               <div className="flex flex-col md:flex-row gap-10 justify-center mb-16 md:mb-20 px-4 md:px-10">
                 {selectedCards.map((card, idx) => (
@@ -1043,7 +1099,7 @@ export default function Home() {
               </div>
 
               <div className="mt-20 flex flex-col sm:flex-row gap-6 pt-12 border-t border-white/10 no-export">
-                <button 
+                <button
                   onClick={async () => {
                     if (!sajuResult) return;
                     setIsExporting(true);
@@ -1062,7 +1118,7 @@ export default function Home() {
                     } finally {
                       setIsExporting(false);
                     }
-                  }} 
+                  }}
                   disabled={isExporting}
                   className={`flex-[2] bg-gradient-to-r from-accent to-yellow-600 text-background font-black py-5 rounded-[1.5rem] hover:brightness-110 active:scale-[0.98] transition-all shadow-2xl ${isExporting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
@@ -1074,11 +1130,11 @@ export default function Home() {
 
             {/* Saju Dashboard as a secondary/supplementary info at the bottom */}
             <div className="mt-20 opacity-50 hover:opacity-100 transition-opacity no-export">
-               <div className="text-center mb-8">
-                 <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-accent/20 to-transparent mb-4" />
-                 <p className="text-xs uppercase tracking-[0.4em] font-mystic text-accent/40">Base Fate Profile (Saju)</p>
-               </div>
-               <SajuDashboard data={sajuResult!} userName={birthData.year ? '당신' : '사용자'} />
+              <div className="text-center mb-8">
+                <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-accent/20 to-transparent mb-4" />
+                <p className="text-xs uppercase tracking-[0.4em] font-mystic text-accent/40">Base Fate Profile (Saju)</p>
+              </div>
+              <SajuDashboard data={sajuResult!} userName={birthData.year ? '당신' : '사용자'} />
             </div>
           </motion.section>
         )}
