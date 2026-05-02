@@ -80,10 +80,9 @@ export async function POST(req: Request) {
     // --- Fallback & Retry Logic for Stability ---
     // 2026년 4월 기준 최신 플래시 모델 라인업으로 마이그레이션 (3.1 및 2.5 시리즈)
     const modelsToTry = [
-      { name: 'gemini-3.1-flash', version: 'v1', maxRetries: 3 },      // 2026년 최신 주력 모델
-      { name: 'gemini-3.1-flash-lite', version: 'v1', maxRetries: 2 }, // 저지연/저비용 모델
-      { name: 'gemini-2.5-flash', version: 'v1', maxRetries: 3 },      // 안정적인 2.5 시리즈
-      { name: 'gemini-2.5-flash-lite', version: 'v1', maxRetries: 1 }  // 가벼운 대안
+      { name: 'gemini-3-flash-preview', version: 'v1beta', maxRetries: 3 },      // 2026년 표준 최신 모델
+      { name: 'gemini-3.1-pro-preview', version: 'v1beta', maxRetries: 2 },     // 고성능 추론 모델
+      { name: 'gemini-3.1-flash-lite-preview', version: 'v1beta', maxRetries: 2 } // 저지연 대안 모델
     ];
     let result;
     let lastError;
@@ -91,7 +90,7 @@ export async function POST(req: Request) {
 
     for (const config of modelsToTry) {
       if (success) break;
-      
+
       const { name: modelName, version: apiVersion, maxRetries: maxAttemptsPerModel } = config;
       // getGenerativeModel의 두 번째 인자로 apiVersion을 명시합니다.
       const model = genAI.getGenerativeModel({ model: modelName }, { apiVersion });
@@ -112,18 +111,18 @@ export async function POST(req: Request) {
           lastError = err;
           const errorMessage = err instanceof Error ? err.message : String(err);
           console.warn(`Gemini API [${modelName}] Attempt ${attempts} failed:`, errorMessage);
-          
+
           // 404 에러(모델 없음) 발생 시 즉시 다음 모델로 전환
           const isNotFound = errorMessage?.includes('404') || errorMessage?.includes('not found');
           if (isNotFound) {
             console.warn(`Model ${modelName} not found (404), skipping immediately.`);
-            break; 
+            break;
           }
 
           const isRateLimit = errorMessage?.includes('429') || errorMessage?.includes('Quota');
           if (isRateLimit) {
             console.warn(`Rate limit (429) hit for ${modelName}, switching model immediately.`);
-            break; 
+            break;
           }
 
           if (attempts < maxAttemptsPerModel) {
@@ -134,7 +133,7 @@ export async function POST(req: Request) {
           }
         }
       }
-      
+
       if (!success) {
         console.warn(`Model ${modelName} failed. Trying next available model...`);
       }
@@ -148,12 +147,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ result: text });
   } catch (error: unknown) {
     console.error('Gemini API Final Error:', error);
-    
+
     const errorMessage = error instanceof Error ? error.message : String(error);
     // 에러 유형별 사용자 안내 메시지 최적화
     const isRateLimit = errorMessage?.includes('429') || errorMessage?.includes('Quota');
     const isServiceUnavailable = errorMessage?.includes('503') || errorMessage?.includes('Service Unavailable');
-    
+
     let displayMessage = '사주 해석 중 일시적인 오류가 발생했습니다. 다시 시도해 주세요.';
     if (isRateLimit) {
       displayMessage = '오늘의 무료 이용 한도에 도달했습니다. 잠시 후 혹은 내일 다시 시도해 주세요.';
@@ -162,7 +161,7 @@ export async function POST(req: Request) {
     } else {
       displayMessage = errorMessage || displayMessage;
     }
-      
+
     return NextResponse.json({ error: displayMessage }, { status: 500 });
   }
 }

@@ -77,8 +77,156 @@ function MinhwaCard({ card, index, isFlipped = false, onClick, isSelected = fals
   );
 }
 
+const playChantingSound = () => {
+  if (typeof window === 'undefined') return () => {};
+  const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+  const masterGain = ctx.createGain();
+  masterGain.gain.setValueAtTime(0, ctx.currentTime);
+  masterGain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 1);
+  masterGain.connect(ctx.destination);
+
+  const createVoice = (freq: number, type: 'sawtooth' | 'square') => {
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    
+    // Formant-like filtering for "Ooo/Uuu" vowel sound
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(400, ctx.currentTime);
+    filter.Q.value = 10;
+
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(0.3, ctx.currentTime); // Slow pulse
+    lfoGain.gain.setValueAtTime(100, ctx.currentTime);
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    osc.connect(filter);
+    filter.connect(masterGain);
+    
+    lfo.start();
+    osc.start();
+    return { osc, lfo };
+  };
+
+  createVoice(75, 'sawtooth');
+  createVoice(110, 'square');
+
+  return () => {
+    if (ctx.state === 'closed') return;
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+    setTimeout(() => {
+      if (ctx.state !== 'closed') ctx.close();
+    }, 600);
+  };
+};
+
+const playTarotReadingSound = () => {
+  if (typeof window === 'undefined') return () => {};
+  const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+  const masterGain = ctx.createGain();
+  masterGain.gain.setValueAtTime(0, ctx.currentTime);
+  masterGain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 1);
+  masterGain.connect(ctx.destination);
+
+  const createArcaneVoice = (freq: number) => {
+    const osc = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+
+    osc.type = 'sine'; // Pure mystical tone
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(1200, ctx.currentTime);
+    filter.Q.value = 15;
+
+    lfo.type = 'triangle';
+    lfo.frequency.setValueAtTime(5, ctx.currentTime); // Faster, more magical pulse
+    lfoGain.gain.setValueAtTime(200, ctx.currentTime);
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    osc.connect(filter);
+    filter.connect(masterGain);
+    
+    lfo.start();
+    osc.start();
+    return { osc, lfo };
+  };
+
+  createArcaneVoice(220);
+  createArcaneVoice(330);
+  createArcaneVoice(554.37); // C# (Arcane feeling)
+
+  return () => {
+    if (ctx.state === 'closed') return;
+    masterGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
+    setTimeout(() => {
+      if (ctx.state !== 'closed') ctx.close();
+    }, 1000);
+  };
+};
+
+const playShuffleSound = () => {
+  if (typeof window === 'undefined') return;
+  const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+  
+  const playSnap = (startTime: number, vol: number) => {
+    const bufferSize = ctx.sampleRate * 0.02;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'highpass'; // Sharper snap
+    filter.frequency.setValueAtTime(1500, ctx.currentTime + startTime);
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime + startTime);
+    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + startTime + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startTime + 0.015);
+    
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    
+    noise.start(ctx.currentTime + startTime);
+    noise.stop(ctx.currentTime + startTime + 0.02);
+  };
+
+  // High-speed "Riffle" sequence (32 fast snaps)
+  for (let i = 0; i < 32; i++) {
+    // Slight timing jitter for natural feel
+    const jitter = Math.random() * 0.01;
+    const timing = (i * 0.04) + jitter;
+    const volume = 0.05 + (Math.random() * 0.05);
+    playSnap(timing, volume);
+  }
+};
+
 // Custom component for the mystical ritual loading animation
 function DosaLoadingOverlay({ message, mode = 'saju' }: { message: string, mode?: 'saju' | 'tarot' }) {
+  useEffect(() => {
+    const stopSound = mode === 'tarot' ? playTarotReadingSound() : playChantingSound();
+    const timer = setTimeout(() => {
+      stopSound();
+    }, 5000); // 5 seconds limit
+    
+    return () => {
+      clearTimeout(timer);
+      stopSound();
+    };
+  }, [mode]);
+
   const sajuPhrases = [
     "생년월일 데이터 퀀텀 파싱 중...",
     "사주팔자 만세력 코드 추출...",
@@ -291,43 +439,113 @@ const ZodiacIcon = ({ hour }: { hour: string }) => {
 // Web Audio API Sound Utilities
 const playZodiacSound = () => {
   if (typeof window === 'undefined') return;
-  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const osc = ctx.createOscillator();
+  const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+  
+  // 1. Energy Swell (Noise-based whoosh)
+  const bufferSize = ctx.sampleRate * 1.5;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.Q.value = 5;
+  // Sweep filter from low to high (The "Whoosh")
+  filter.frequency.setValueAtTime(100, ctx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(3000, ctx.currentTime + 0.8);
+  filter.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + 1.5);
+  
   const gain = ctx.createGain();
-  
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(880, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.5);
-  
   gain.gain.setValueAtTime(0, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
-  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+  gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.6); // Swell up
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5); // Fade out
   
-  osc.connect(gain);
+  noise.connect(filter);
+  filter.connect(gain);
   gain.connect(ctx.destination);
   
+  // 2. Subtle low-end "thump" for presence
+  const osc = ctx.createOscillator();
+  const oscGain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(60, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.5);
+  
+  oscGain.gain.setValueAtTime(0.1, ctx.currentTime);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+  
+  osc.connect(oscGain);
+  oscGain.connect(ctx.destination);
+  
+  noise.start();
   osc.start();
-  osc.stop(ctx.currentTime + 0.8);
+  noise.stop(ctx.currentTime + 1.5);
+  osc.stop(ctx.currentTime + 0.5);
 };
 
 const playTarotSound = () => {
   if (typeof window === 'undefined') return;
-  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
+  const ctx = new (window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
   
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(220, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.2);
-  
-  gain.gain.setValueAtTime(0.3, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-  
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  
-  osc.start();
-  osc.stop(ctx.currentTime + 0.3);
+  // 1. Cinematic Sub-thump (Weight)
+  const sub = ctx.createOscillator();
+  const subGain = ctx.createGain();
+  sub.type = 'sine';
+  sub.frequency.setValueAtTime(60, ctx.currentTime);
+  sub.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 1.0);
+  subGain.gain.setValueAtTime(0, ctx.currentTime);
+  subGain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.1);
+  subGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
+  sub.connect(subGain);
+  subGain.connect(ctx.destination);
+  sub.start();
+
+  // 2. Spectral Shimmer (Non-musical cluster)
+  for (let i = 0; i < 15; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const freq = 800 + Math.random() * 3000; // High frequency cluster
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    // Random swell for each particle
+    const attack = 0.05 + Math.random() * 0.2;
+    const decay = 0.5 + Math.random() * 1.0;
+    gain.gain.linearRampToValueAtTime(0.02, ctx.currentTime + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + decay);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + decay);
+  }
+
+  // 3. Air/Wind Swell (Texture)
+  const bufferSize = ctx.sampleRate * 1.5;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(1000, ctx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(4000, ctx.currentTime + 0.5);
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0, ctx.currentTime);
+  noiseGain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.2);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.0);
+  noise.connect(filter);
+  filter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noise.start();
 };
 
 export default function Home() {
@@ -353,72 +571,13 @@ export default function Home() {
   const [revealingIndex, setRevealingIndex] = useState(0);
   const [shuffleStatus, setShuffleStatus] = useState<'idle' | 'shuffling' | 'dealt'>('idle');
   const [dealtCards, setDealtCards] = useState<TarotCard[]>([]);
-  const [dosaImageIndex, setDosaImageIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-
-    setDosaImageIndex(Math.floor(Math.random() * 10) + 1);
-  }, []);
+  const [shuffleOffsets, setShuffleOffsets] = useState<{ x: number, y: number, rotate: number }[]>([]);
+  const [dosaImageIndex, setDosaImageIndex] = useState<number>(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [prevZodiac, setPrevZodiac] = useState<string | null>(null);
+  const prevZodiacRef = useRef<string | null>(null);
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
-
-  // Preload Zodiac Images
-  useEffect(() => {
-    const sprites = ['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig'];
-    sprites.forEach(sprite => {
-      const img = new Image();
-      img.src = `/assets/zodiac/${sprite}.jpg`;
-    });
-  }, []);
-
-  // 1. Trigger spirit pop-out when both hour and minute are present and zodiac changes
-  useEffect(() => {
-    const h = birthData.hour?.trim() || '';
-    const m = birthData.minute?.trim() || '';
-
-    if (h !== '' && m !== '') {
-      const zodiac = getZodiacByHour(h);
-      if (zodiac && zodiac.sprite !== prevZodiac) {
-        playZodiacSound();
-        setPrevZodiac(zodiac.sprite);
-        setActivePopSpirit(zodiac.sprite);
-      }
-    } else {
-      // If either is empty, hide and reset
-      setPrevZodiac(null);
-      setActivePopSpirit(null);
-    }
-  }, [birthData.hour, birthData.minute, prevZodiac]);
-
-  // 3. Card Revelation Sequence Logic
-  useEffect(() => {
-    if (step === 'tarot_revealing') {
-      if (revealingIndex < 3) {
-        const timer = setTimeout(() => {
-          playTarotSound();
-          setRevealingIndex(prev => prev + 1);
-        }, 2000); // 1s for flip animation + 1s for stay = 2s total cycle
-        return () => clearTimeout(timer);
-      } else {
-        // All cards revealed, fetch interpretation
-        getFinalInterpretation();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, revealingIndex]);
-
-  // 2. Automatically hide the spirit after a delay
-  useEffect(() => {
-    if (activePopSpirit) {
-      const timer = setTimeout(() => {
-        setActivePopSpirit(null);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [activePopSpirit]);
 
   const validateField = (name: string, value: string) => {
     const num = parseInt(value);
@@ -531,6 +690,15 @@ export default function Home() {
   };
 
   const handleShuffle = () => {
+    // Generate static random offsets for animation purity (React 19)
+    const newOffsets = Array.from({ length: 12 }, () => ({
+      x: (Math.random() - 0.5) * 300,
+      y: (Math.random() - 0.5) * 300,
+      rotate: Math.random() * 360
+    }));
+    setShuffleOffsets(newOffsets);
+
+    playShuffleSound();
     setShuffleStatus('shuffling');
     // Simulate mysterious shuffling time
     setTimeout(() => {
@@ -572,6 +740,64 @@ export default function Home() {
       setLoading(false);
     }
   }, [selectedCards, sajuResult]);
+
+  // Effects (defined after functions to allow referencing them)
+  useEffect(() => {
+    // Randomize dosa image only on client to avoid hydration mismatch
+    setDosaImageIndex(Math.floor(Math.random() * 10) + 1);
+
+    const sprites = ['rat', 'ox', 'tiger', 'rabbit', 'dragon', 'snake', 'horse', 'goat', 'monkey', 'rooster', 'dog', 'pig'];
+    sprites.forEach(sprite => {
+      const img = new Image();
+      img.src = `/assets/zodiac/${sprite}.jpg`;
+    });
+  }, []);
+
+  useEffect(() => {
+    const h = birthData.hour?.trim() || '';
+    const m = birthData.minute?.trim() || '';
+
+    if (h !== '' && m !== '') {
+      const zodiac = getZodiacByHour(h);
+      if (zodiac && zodiac.sprite !== prevZodiacRef.current) {
+        playZodiacSound();
+        prevZodiacRef.current = zodiac.sprite;
+        setActivePopSpirit(zodiac.sprite);
+      }
+    } else if (prevZodiacRef.current !== null) {
+      prevZodiacRef.current = null;
+      setActivePopSpirit(null);
+    }
+  }, [birthData.hour, birthData.minute]);
+
+  useEffect(() => {
+    if (step === 'tarot_revealing' && revealingIndex < 3) {
+      const timer = setTimeout(() => {
+        playTarotSound();
+        setRevealingIndex(prev => prev + 1);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, revealingIndex]);
+
+  useEffect(() => {
+    if (step === 'tarot_revealing' && revealingIndex === 3) {
+      // Defer to next tick to avoid React 19 cascading render warning
+      const timer = setTimeout(() => {
+        getFinalInterpretation();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [step, revealingIndex, getFinalInterpretation]);
+
+  useEffect(() => {
+    if (activePopSpirit) {
+      const timer = setTimeout(() => {
+        setActivePopSpirit(null);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [activePopSpirit]);
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-12 flex flex-col items-center min-h-screen">
@@ -815,8 +1041,8 @@ export default function Home() {
               
               <motion.p 
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 0.3 }}
-                className="text-[8px] text-accent/50 font-mystic tracking-[0.2em] text-center mt-2"
+                animate={{ opacity: 0.6 }}
+                className="text-[10px] md:text-xs text-accent/60 font-mystic tracking-[0.2em] text-center mt-4"
               >
                 v1.0
               </motion.p>
@@ -950,14 +1176,14 @@ export default function Home() {
                   >
                     <div className="relative w-60 h-60">
                       {[...Array(12)].map((_, i) => {
-
+                        const offset = shuffleOffsets[i] || { x: 0, y: 0, rotate: 0 };
                         return (
                           <motion.div
                             key={i}
                             animate={{
-                              x: [0, (Math.random() - 0.5) * 300, 0],
-                              y: [0, (Math.random() - 0.5) * 300, 0],
-                              rotate: [0, Math.random() * 360, 0],
+                              x: [0, offset.x, 0],
+                              y: [0, offset.y, 0],
+                              rotate: [0, offset.rotate, 0],
                               opacity: [0.5, 1, 0.5]
                             }}
                             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
@@ -1010,13 +1236,27 @@ export default function Home() {
             </div>
 
             {shuffleStatus === 'dealt' && (
-              <button
-                onClick={startRevelation}
-                disabled={selectedCards.length < 3 || loading}
-                className="px-16 py-6 bg-accent text-background font-black rounded-full disabled:opacity-20 transition-all hover:scale-110 active:scale-95 shadow-[0_20px_40px_rgba(212,175,55,0.3)] text-xl"
-              >
-                {loading ? '신령의 계시를 받는 중...' : '🔮 민화 타로의 계시 받기'}
-              </button>
+              <div className="flex flex-col items-center gap-6">
+                {selectedCards.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setSelectedCards([]);
+                      handleShuffle();
+                    }}
+                    className="px-8 py-3 border border-accent/30 text-accent/70 rounded-full hover:bg-accent/10 transition-all font-mystic text-sm"
+                  >
+                    셔플부터 다시 하기
+                  </button>
+                )}
+                
+                <button
+                  onClick={startRevelation}
+                  disabled={selectedCards.length < 3 || loading}
+                  className="px-16 py-6 bg-accent text-background font-black rounded-full disabled:opacity-20 transition-all hover:scale-110 active:scale-95 shadow-[0_20px_40px_rgba(212,175,55,0.3)] text-xl"
+                >
+                  {loading ? '신령의 계시를 받는 중...' : '🔮 민화 타로의 계시 받기'}
+                </button>
+              </div>
             )}
           </motion.section>
         )}
